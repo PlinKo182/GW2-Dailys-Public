@@ -13,13 +13,14 @@ import useStore from './store/useStore';
 const queryClient = new QueryClient();
 
 function App() {
-  const { activeProfile, addProfile } = useStore();
+  const { activeProfile } = useStore();
+  console.log('App renderizado, perfil ativo:', activeProfile);
 
   return (
     <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
       <QueryClientProvider client={queryClient}>
-        <div className="App">
-          <BrowserRouter>
+        <BrowserRouter>
+          <div className="App">
             <Routes>
               <Route
                 path="/"
@@ -42,12 +43,12 @@ function App() {
                 }
               />
             </Routes>
-          </BrowserRouter>
 
-          {/* Vercel Analytics */}
-          <SpeedInsights />
-          <Analytics />
-        </div>
+            {/* Vercel Analytics */}
+            <SpeedInsights />
+            <Analytics />
+          </div>
+        </BrowserRouter>
       </QueryClientProvider>
     </ThemeProvider>
   );

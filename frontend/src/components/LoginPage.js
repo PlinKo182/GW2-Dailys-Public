@@ -1,11 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { fetchProgress } from '../services/api';
 import { useNavigate } from 'react-router-dom';
 import useStore from '../store/useStore';
 
-export default function LoginPage() {
+function LoginPage() {
+  console.log('LoginPage renderizado');
   const navigate = useNavigate();
   const { addProfile } = useStore();
+
+  useEffect(() => {
+    console.log('LoginPage montado');
+    return () => console.log('LoginPage desmontado');
+  }, []);
   const [userName, setUserName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -14,6 +20,7 @@ export default function LoginPage() {
     e.preventDefault();
     setLoading(true);
     setError('');
+    console.log('Formulário submetido com nome:', userName);
 
     if (!userName.trim()) {
       setError('Digite um nome válido.');
@@ -22,14 +29,21 @@ export default function LoginPage() {
     }
 
     try {
+      console.log('Verificando nome no backend...');
       const data = await fetchProgress(userName.trim());
+      console.log('Resposta do backend:', data);
+      
       if (data && Object.keys(data).length > 0) {
+        console.log('Nome já existe');
         setError('Nome já existe, escolha outro.');
       } else {
+        console.log('Nome disponível, criando perfil...');
         addProfile(userName.trim());
+        console.log('Perfil criado, navegando para dashboard...');
         navigate('/dashboard');
       }
     } catch (err) {
+      console.error('Erro durante o processo:', err);
       setError('Erro ao verificar nome.');
     }
     setLoading(false);
@@ -41,6 +55,7 @@ export default function LoginPage() {
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">GW2 Daily Tracker</h1>
           <p className="text-muted-foreground">Escolha seu nome de usuário para começar</p>
+          <p className="text-xs text-muted-foreground mt-2">Debug: {loading ? 'Carregando' : 'Pronto'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -68,6 +83,7 @@ export default function LoginPage() {
             type="submit"
             disabled={loading}
             className="w-full py-2 px-4 bg-primary text-primary-foreground rounded hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50"
+            onClick={() => console.log('Botão clicado')}
           >
             {loading ? 'Verificando...' : 'Entrar'}
           </button>
@@ -81,3 +97,5 @@ export default function LoginPage() {
     </div>
   );
 }
+
+export default LoginPage;
