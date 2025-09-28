@@ -1,7 +1,11 @@
 import React, { useState } from 'react';
 import { fetchProgress } from '../services/api';
+import { useNavigate } from 'react-router-dom';
+import useStore from '../store/useStore';
 
-export default function LoginPage({ onSuccess }) {
+export default function LoginPage() {
+  const navigate = useNavigate();
+  const { addProfile } = useStore();
   const [userName, setUserName] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +26,8 @@ export default function LoginPage({ onSuccess }) {
       if (data && Object.keys(data).length > 0) {
         setError('Nome já existe, escolha outro.');
       } else {
-        onSuccess(userName.trim());
+        addProfile(userName.trim());
+        navigate('/dashboard');
       }
     } catch (err) {
       setError('Erro ao verificar nome.');

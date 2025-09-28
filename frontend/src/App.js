@@ -27,10 +27,7 @@ function App() {
                   activeProfile ? (
                     <Navigate to="/dashboard" replace />
                   ) : (
-                    <LoginPage onSuccess={(name) => {
-                      addProfile(name);
-                      window.location.href = '/dashboard';
-                    }} />
+                    <LoginPage />
                   )
                 }
               />

@@ -107,6 +107,7 @@ const useStore = create((set, get) => ({
     }
     set((state) => ({
       profiles: [...state.profiles, profileName],
+      activeProfile: profileName,  // Define activeProfile imediatamente
       profileData: {
         ...state.profileData,
         [profileName]: {
@@ -115,8 +116,7 @@ const useStore = create((set, get) => ({
         },
       },
     }));
-    get().switchProfile(profileName); // Switch to the new profile
-    get()._saveState();
+    get()._saveState();  // Salva o estado atualizado
   },
 
   // Switch the active profile
