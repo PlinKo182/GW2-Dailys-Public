@@ -30,7 +30,17 @@ const useStore = create((set, get) => ({
   // Load initial data from localStorage
   loadInitialData: () => {
     const appData = localStorageAPI.getAppData();
-    set(appData);
+    // Se não houver perfis ou activeProfile não for válido, força activeProfile = null
+    if (!appData.profiles || appData.profiles.length === 0 || !appData.activeProfile || !appData.profiles.includes(appData.activeProfile)) {
+      set({
+        profiles: [],
+        activeProfile: null,
+        profileData: {},
+        lastResetDate: appData.lastResetDate || 0,
+      });
+    } else {
+      set(appData);
+    }
   },
 
   loadFromBackend: async () => {
