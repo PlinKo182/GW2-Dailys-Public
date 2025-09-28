@@ -1,1 +1,0 @@
-export const mockData = {"events": "Integrado via mockData original"};
