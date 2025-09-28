@@ -56,6 +56,7 @@ DB_NAME = os.environ.get("MONGODB_DB", "gw2_daily")
 mongo_client = None
 db = None
 progress_collection = None
+users_collection = None
 
 if not MONGODB_URI:
     logger.error("MONGODB_URI not set. Configure the environment variable with the connection URI.")
@@ -70,6 +71,7 @@ else:
         logger.debug(f"MongoDB connected successfully. Using database '{DB_NAME}'")
         db = mongo_client[DB_NAME]
         progress_collection = db["daily_progress"]
+        users_collection = db["users"]
         
         # Log available collections
         collections = db.list_collection_names() if LOG_LEVEL == "DEBUG" else []
@@ -96,6 +98,9 @@ class ProgressRequest(BaseModel):
     date: str
     dailyTasks: dict
     completedEventTypes: dict = {}
+    userName: str
+
+class UserRequest(BaseModel):
     userName: str
 
 # Root endpoint
@@ -166,9 +171,14 @@ async def mongo_health():
 @api_router.put("/progress")
 @api_router.post("/progress")
 async def save_progress(req: ProgressRequest):
-    if progress_collection is None:
+    if progress_collection is None or users_collection is None:
         return {"success": False, "error": "MongoDB not configured"}
     try:
+        # First, verify the user exists in the users collection
+        if not users_collection.find_one({"userName": req.userName}):
+            return {"success": False, "error": "User not found, cannot save progress."}
+
+        # If user exists, upsert their progress
         result = progress_collection.update_one(
             {"userName": req.userName},
             {
@@ -221,6 +231,26 @@ async def get_user_progress(userName: str):
             "details": str(e),
             "type": e.__class__.__name__
         }
+
+@api_router.post("/user")
+async def create_user(req: UserRequest):
+    if users_collection is None:
+        return {"success": False, "error": "MongoDB not configured"}
+    try:
+        # Check if user already exists
+        if users_collection.find_one({"userName": req.userName}):
+            return {"success": False, "error": "User already exists"}
+
+        # Create new user
+        users_collection.insert_one({"userName": req.userName, "createdAt": datetime.utcnow()})
+
+        # Also create a default progress document for the user
+        progress_collection.insert_one({"userName": req.userName, "progressByDate": {}})
+
+        return {"success": True, "userName": req.userName}
+    except Exception as e:
+        logging.error(f"Error creating user: {e}")
+        return {"success": False, "error": str(e)}
 
 # Include router in the application
 app.include_router(api_router)

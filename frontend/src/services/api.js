@@ -19,45 +19,11 @@ const defaultTasks = {
 };
 
 const initialData = {
-  profiles: ['Default'],
-  activeProfile: 'Default',
-  profileData: {
-    Default: {
-      dailyTasks: defaultTasks,
-      completedEventTypes: {},
-    },
-  },
+  profiles: [],
+  activeProfile: null,
+  profileData: {},
+  lastResetDate: 0,
 };
-
-// User session management (can be deprecated if not used elsewhere)
-const getUserId = () => {
-  let userId = localStorage.getItem('tyriaTracker_userId');
-  if (!userId) {
-    userId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-      const r = Math.random() * 16 | 0;
-      const v = c === 'x' ? r : (r & 0x3 | 0x8);
-      return v.toString(16);
-    });
-    localStorage.setItem('tyriaTracker_userId', userId);
-  }
-  return userId;
-};
-
-// API service class (mostly for backend interaction, not localStorage)
-class TyriaTrackerAPI {
-  constructor() {
-    this.userId = getUserId();
-  }
-
-  async healthCheck() {
-    try {
-      const response = await axiosInstance.get(`${API}/`);
-      return response.data;
-    } catch (error) {
-      return null;
-    }
-  }
-}
 
 // New simplified localStorage API for multi-profile support
 export const localStorageAPI = {
@@ -67,15 +33,15 @@ export const localStorageAPI = {
       try {
         const parsed = JSON.parse(saved);
         // Basic validation to ensure it has the expected structure
-        if (parsed.profiles && parsed.activeProfile && parsed.profileData) {
-          return parsed;
+        if (parsed.profiles && parsed.profileData) {
+          return { ...initialData, ...parsed }; // Merge with defaults
         }
       } catch (e) {
         console.error("Failed to parse app data from localStorage", e);
-        return initialData; // Return default on error
+        return initialData;
       }
     }
-    return initialData; // Return default if nothing is saved
+    return initialData;
   },
 
   saveAppData: (data) => {
@@ -86,49 +52,50 @@ export const localStorageAPI = {
       console.error("Failed to save app data to localStorage", e);
     }
   },
+
+  clearAppData: () => {
+    localStorage.removeItem(APP_DATA_KEY);
+  }
 };
 
-// Export singleton instance
-export const api = new TyriaTrackerAPI();
+// --- Remote API Functions ---
+export async function createUser(userName) {
+  try {
+    const response = await axiosInstance.post(`${API}/user`, { userName });
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data?.error || 'Failed to create user.');
+  } catch (error) {
+    if (error.response && error.response.data && error.response.data.error) {
+        throw new Error(error.response.data.error);
+    }
+    throw error;
+  }
+}
 
-// --- Remote progress functions (Mongo backend) ---
 export async function fetchProgress(userName) {
   try {
     const res = await axiosInstance.get(`${API}/progress/${encodeURIComponent(userName)}`);
     if (res.data && res.data.success) {
-      return res.data.data.progressByDate || res.data.data;
+      return res.data.data;
+    }
+    if (res.data && !res.data.success) {
+        throw new Error(res.data.error);
     }
     return {};
   } catch (e) {
-    console.warn('Erro ao carregar progresso:', e?.message);
-    return {};
+    console.warn('Error fetching progress:', e?.message);
+    throw e;
   }
 }
 
-export async function saveProgress({ userName, date, dailyTasks, completedEvents = {}, completedEventTypes = {} }) {
+export async function saveProgress({ userName, date, dailyTasks, completedEventTypes = {} }) {
   try {
-    // Tentar primeiro com POST, se falhar tenta PUT
-    try {
-      const response = await axiosInstance.post(`${API}/progress`, {
-        userName,
-        date,
-        dailyTasks,
-        completedEvents,
-        completedEventTypes,
-      });
-      if (response.data?.success) {
-        return response.data;
-      }
-    } catch (postError) {
-      console.warn('POST falhou, tentando PUT:', postError?.message);
-    }
-
-    // Se POST falhou, tenta PUT
-    const response = await axiosInstance.put(`${API}/progress`, {
+    const response = await axiosInstance.post(`${API}/progress`, {
       userName,
       date,
       dailyTasks,
-      completedEvents,
       completedEventTypes,
     });
     if (!response.data?.success) {
@@ -137,8 +104,6 @@ export async function saveProgress({ userName, date, dailyTasks, completedEvents
     return response.data;
   } catch (e) {
     console.warn('Falha ao sincronizar progresso remoto:', e?.message);
-    throw e; // propaga erro para retry
+    throw e;
   }
 }
-
-export default api;

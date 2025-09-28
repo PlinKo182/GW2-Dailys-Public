@@ -8,9 +8,8 @@ import Footer from './Footer';
 import { useEventFilters } from '../hooks/useEventFilters';
 import * as Tabs from '@radix-ui/react-tabs';
 import useStore from '../store/useStore';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { ProfileSwitcher } from './ui/ProfileSwitcher';
 import HistoryTab from './HistoryTab';
 
 const Dashboard = () => {
@@ -18,20 +17,12 @@ const Dashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
 
-  // Get state and actions from the Zustand store
-  const {
-    notification,
-    loadInitialData,
-    handleTaskToggle,
-    handleEventToggle,
-    setNotification,
-    checkAndResetDailyProgress,
-    activeProfile,
-  } = useStore();
-
-  // Get active profile data using REACTIVE selectors
-  const dailyTasks = useStore(state => state.profileData[state.activeProfile]?.dailyTasks || {});
-  const completedEventTypes = useStore(state => state.profileData[state.activeProfile]?.completedEventTypes || {});
+  // Get state and actions from the Zustand store using selectors
+  const notification = useStore(state => state.notification);
+  const checkAndResetDailyProgress = useStore(state => state.checkAndResetDailyProgress);
+  const handleTaskToggle = useStore(state => state.handleTaskToggle);
+  const handleEventToggle = useStore(state => state.handleEventToggle);
+  const { dailyTasks, completedEventTypes } = useStore(state => state.userData);
 
   const { eventFilters, updateEventFilters, isLoading } = useEventFilters();
 
@@ -136,9 +127,6 @@ const Dashboard = () => {
         <div className="mb-10">
           <h2 className="text-3xl font-bold mb-2">Daily Dashboard</h2>
           <p className="text-muted-foreground">Track your daily progress in Guild Wars 2</p>
-          <div className="flex items-center gap-4 mt-4 flex-wrap">
-            <ProfileSwitcher />
-          </div>
         </div>
 
         <DailyProgress overallProgress={calculateOverallProgress()} />
