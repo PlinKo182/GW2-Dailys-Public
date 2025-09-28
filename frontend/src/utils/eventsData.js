@@ -1,4 +1,4 @@
-// Dados de eventos convertidos automaticamente
+// Dados de eventos convertidos automaticament
 // Gerado em: 2025-09-26 00:13:43
 
 export const eventsData = {
@@ -128,7 +128,7 @@ export const eventsData = {
       },
       "Tequatl the Sunless": {
         "duration_minutes": 30,
-        "utc_times": ["00:00", "03:00", "07:00", "11:30", "16:00", "19:00", "24:00"],
+        "utc_times": ["00:00", "03:00", "07:00", "11:30", "16:00", "19:00"],
         "waypoint": "Splintered Coast Waypoint — [&BNABAAA=]",
         "link": "https://wiki.guildwars2.com/wiki/Defeat_Tequatl_the_Sunless",
         "rewards": {
@@ -380,12 +380,12 @@ export const eventsData = {
         "duration_minutes": 120,
         "utc_times": ["01:30", "03:30", "05:30", "07:30", "09:30", "11:30", "13:30", "15:30", "17:30", "19:30", "21:30", "23:30"],
         "waypoint": "Pact Base Camp Waypoint - [&BBAIAAA=]",
-          "link": "https://wiki.guildwars2.com/wiki/Defeat_Tequatl_the_Sunless",
+        "link": "https://wiki.guildwars2.com/wiki/Dragon%27s_Stand_(meta_event)",
         "rewards": {
           "item": { "name": "", "link": "", "itemId": null },
           "currency": { "amount": null, "type": "" }
         }
-      },
+      }
     }
   },
   "Living World Season 3": {
