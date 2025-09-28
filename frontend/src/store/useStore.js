@@ -11,6 +11,9 @@ const defaultTasks = {
 const SYNC_DEBOUNCE = 800;
 let syncTimer = null;
 
+// Limpa qualquer dado salvo anteriormente
+localStorage.removeItem('tyriaTracker_appData');
+
 const useStore = create((set, get) => ({
   // --- STATE ---
   profiles: [],
@@ -29,19 +32,13 @@ const useStore = create((set, get) => ({
 
   // Load initial data from localStorage
   loadInitialData: () => {
-    const appData = localStorageAPI.getAppData();
-    // Se não houver perfis ou activeProfile não for válido, limpa localStorage e força activeProfile = null
-    if (!appData.profiles || appData.profiles.length === 0 || !appData.activeProfile || !appData.profiles.includes(appData.activeProfile)) {
-      localStorageAPI.saveAppData({ profiles: [], activeProfile: null, profileData: {}, lastResetDate: appData.lastResetDate || 0 });
-      set({
-        profiles: [],
-        activeProfile: null,
-        profileData: {},
-        lastResetDate: appData.lastResetDate || 0,
-      });
-    } else {
-      set(appData);
-    }
+    // Sempre começa com estado limpo
+    set({
+      profiles: [],
+      activeProfile: null,
+      profileData: {},
+      lastResetDate: 0
+    });
   },
 
   loadFromBackend: async () => {

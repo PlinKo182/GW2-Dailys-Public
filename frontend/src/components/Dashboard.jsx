@@ -12,13 +12,11 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import axios from 'axios';
 import { ProfileSwitcher } from './ui/ProfileSwitcher';
 import HistoryTab from './HistoryTab';
-import UserNameModal from './UserNameModal';
 
 const Dashboard = () => {
   // Local state for UI that doesn't need to be global
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [showUserModal, setShowUserModal] = useState(false);
 
   // Get state and actions from the Zustand store
   const {
@@ -28,8 +26,6 @@ const Dashboard = () => {
     handleEventToggle,
     setNotification,
     checkAndResetDailyProgress,
-    activeProfile,
-    addProfile,
   } = useStore();
 
   // Get active profile data using REACTIVE selectors
@@ -58,9 +54,6 @@ const Dashboard = () => {
   useEffect(() => {
     loadInitialData();
     checkAndResetDailyProgress();
-
-    // Se não houver perfil ativo, mostrar modal
-    if (!activeProfile) setShowUserModal(true);
 
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);

@@ -19,14 +19,10 @@ const defaultTasks = {
 };
 
 const initialData = {
-  profiles: ['Default'],
-  activeProfile: 'Default',
-  profileData: {
-    Default: {
-      dailyTasks: defaultTasks,
-      completedEventTypes: {},
-    },
-  },
+  profiles: [],
+  activeProfile: null,
+  profileData: {},
+  lastResetDate: 0
 };
 
 // User session management (can be deprecated if not used elsewhere)
