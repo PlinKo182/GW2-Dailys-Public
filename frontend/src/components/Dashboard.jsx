@@ -122,6 +122,17 @@ const Dashboard = () => {
     );
   }
 
+  if (!activeProfile) {
+    return (
+      <UserNameModal
+        onSuccess={name => {
+          addProfile(name);
+          setShowUserModal(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <Header currentTime={currentTime} apiStatus={apiStatus} isOnline={isOnline} />
@@ -194,14 +205,6 @@ const Dashboard = () => {
       </main>
 
       <Footer />
-      {showUserModal && (
-        <UserNameModal
-          onSuccess={name => {
-            addProfile(name);
-            setShowUserModal(false);
-          }}
-        />
-      )}
     </div>
   );
 }
