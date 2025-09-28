@@ -51,7 +51,7 @@ app.add_middleware(
 
 # MongoDB Atlas connection
 MONGODB_URI = os.environ.get("MONGODB_URI")
-DB_NAME = os.environ.get("MONGODB_DB", "gw2_daily")
+DB_NAME = os.environ.get("MONGODB_DB", "gw2_daily_public")
 
 mongo_client = None
 db = None
