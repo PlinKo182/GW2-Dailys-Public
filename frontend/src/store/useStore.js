@@ -30,8 +30,9 @@ const useStore = create((set, get) => ({
   // Load initial data from localStorage
   loadInitialData: () => {
     const appData = localStorageAPI.getAppData();
-    // Se não houver perfis ou activeProfile não for válido, força activeProfile = null
+    // Se não houver perfis ou activeProfile não for válido, limpa localStorage e força activeProfile = null
     if (!appData.profiles || appData.profiles.length === 0 || !appData.activeProfile || !appData.profiles.includes(appData.activeProfile)) {
+      localStorageAPI.saveAppData({ profiles: [], activeProfile: null, profileData: {}, lastResetDate: appData.lastResetDate || 0 });
       set({
         profiles: [],
         activeProfile: null,
