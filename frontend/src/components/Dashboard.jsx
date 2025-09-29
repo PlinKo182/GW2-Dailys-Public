@@ -63,7 +63,7 @@ const Dashboard = () => {
       window.removeEventListener('offline', handleOffline);
       clearInterval(timeInterval);
     };
-  }, [loadInitialData, checkAndResetDailyProgress]);
+  }, [checkAndResetDailyProgress]);
 
   // Progress calculation logic (now depends on store state)
   const calculateOverallProgress = useCallback(() => {
