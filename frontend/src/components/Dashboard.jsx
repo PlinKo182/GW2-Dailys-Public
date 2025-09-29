@@ -115,15 +115,11 @@ const Dashboard = () => {
     );
   }
 
+  // Get active profile from store
+  const activeProfile = useStore(state => state.activeProfile);
+  
   if (!activeProfile) {
-    return (
-      <UserNameModal
-        onSuccess={name => {
-          addProfile(name);
-          setShowUserModal(false);
-        }}
-      />
-    );
+    return null; // Route protection is handled in App.js
   }
 
   return (

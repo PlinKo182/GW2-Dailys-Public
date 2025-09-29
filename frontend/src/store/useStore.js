@@ -53,12 +53,20 @@ const useStore = create(
 
       // Add a new profile
       addProfile: (profileName) => {
-        if (!profileName) return;
+        console.log('Adding profile:', profileName);
+        if (!profileName) {
+          console.error('Invalid profile name');
+          return;
+        }
         
         set(state => {
-          if (state.profiles.includes(profileName)) return state;
+          console.log('Current state:', state);
+          if (state.profiles.includes(profileName)) {
+            console.error('Profile already exists');
+            return state;
+          }
           
-          return {
+          const newState = {
             profiles: [...state.profiles, profileName],
             activeProfile: profileName,
             profileData: {
@@ -69,6 +77,8 @@ const useStore = create(
               }
             }
           };
+          console.log('New state:', newState);
+          return newState;
         });
       },
 
@@ -218,8 +228,23 @@ const useStore = create(
     {
       name: 'tyria-tracker-storage',
       version: 1,
+      partialize: (state) => ({
+        profiles: state.profiles,
+        activeProfile: state.activeProfile,
+        profileData: state.profileData,
+        lastResetDate: state.lastResetDate
+      }),
+      onRehydrateStorage: (state) => {
+        console.log('Hydrating store with state:', state);
+        return (state) => {
+          console.log('Store hydrated with state:', state);
+        };
+      },
     }
   )
 );
+
+// Log initial store state
+console.log('Initial store state:', useStore.getState());
 
 export default useStore;
