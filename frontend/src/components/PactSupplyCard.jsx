@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { ClipboardCopyIcon } from '@heroicons/react/24/outline';
+import { ClipboardDocumentIcon } from '@heroicons/react/24/outline';
 import useStore from '../store/useStore';
 
 // Data from the user request, converted to JS
@@ -75,7 +75,7 @@ const PactSupplyCard = ({ currentTime }) => {
                   onClick={() => copyToClipboard(chatlink, npc)}
                   title={`Copy ${npc}'s chatlink`}
                 >
-                  <ClipboardCopyIcon className="h-4 w-4" />
+                  <ClipboardDocumentIcon className="h-4 w-4" />
                 </Button>
               </div>
             </div>
