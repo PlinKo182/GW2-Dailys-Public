@@ -28,15 +28,14 @@ const CustomTaskItem = ({ task, isCompleted, onToggle, onUpdate, onDelete, onCop
         </label>
       </div>
       {task.waypoint && (
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-6 w-6"
+        <button
           onClick={() => onCopyWaypoint(task.waypoint)}
-          title="Copy waypoint"
+          aria-label={`Copy waypoint for ${task.name}`}
+          className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150"
+          title="Click to copy waypoint"
         >
-          <LinkIcon className="h-4 w-4 text-primary" />
-        </Button>
+          {task.waypoint}
+        </button>
       )}
       {isEditMode && (
         <div className="flex items-center space-x-1">
