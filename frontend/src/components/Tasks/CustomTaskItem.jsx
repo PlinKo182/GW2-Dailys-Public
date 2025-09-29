@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { PencilIcon, TrashIcon, LinkIcon } from '@heroicons/react/24/outline';
 import TaskTimer from './TaskTimer';
 
-import TaskTimer from './TaskTimer';
-
 const CustomTaskItem = ({ task, isCompleted, onToggle, onUpdate, onDelete, onCopyWaypoint, currentTime }) => {
   return (
     <div className="flex items-center space-x-3 group">
