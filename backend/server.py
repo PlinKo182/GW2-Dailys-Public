@@ -208,26 +208,25 @@ async def save_progress(req: ProgressRequest):
 # Endpoint to query user progress history
 @api_router.get("/progress/{userName}")
 async def get_user_progress(userName: str):
-    if progress_collection is None:
-        logger.error("Attempted MongoDB access but client is None")
-        logger.error(f"MONGODB_URI defined: {bool(MONGODB_URI)}")
-        logger.error(f"DB_NAME: {DB_NAME}")
+    if users_collection is None or progress_collection is None:
+        logger.error("Attempted MongoDB access but a collection is None")
         return {"success": False, "error": "MongoDB not configured"}
     try:
-        # Log connection state
-        try:
-            mongo_client.admin.command('ping')
-            logger.debug("MongoDB connection OK at request time")
-        except Exception as ping_err:
-            logger.error(f"MongoDB ping failed: {ping_err}")
-            raise Exception(f"MongoDB unavailable: {ping_err}")
+        # First, validate that the user exists in the main users collection.
+        if not users_collection.find_one({"userName": userName}):
+            logger.warning(f"Attempted to get progress for non-existent user: {userName}")
+            return {"success": False, "error": "User not found"}
 
-        # Try to fetch document
-        doc = progress_collection.find_one({"userName": userName}, {"_id": 0})
-        logger.debug(f"Search for userName={userName}: found={bool(doc)}")
-        if doc:
-            return {"success": True, "data": doc.get("progressByDate", {})}
-        return {"success": False, "error": "User not found"}
+        # If the user is valid, fetch their progress document.
+        # It's okay if this is None; it just means they have no progress saved yet.
+        progress_doc = progress_collection.find_one({"userName": userName}, {"_id": 0})
+
+        logger.debug(f"Progress search for userName={userName}: found={bool(progress_doc)}")
+
+        # Return the progress data if it exists, otherwise return an empty object.
+        progress_data = progress_doc.get("progressByDate", {}) if progress_doc else {}
+        return {"success": True, "data": progress_data}
+
     except Exception as e:
         logger.exception(f"Error getting progress for '{userName}':")
         return {
