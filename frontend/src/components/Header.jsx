@@ -1,8 +1,17 @@
 import React from 'react';
 import { formatTimeWithSeconds } from '../utils/timeUtils';
 import { ModeToggle } from "@/components/ui/ThemeSwitcher";
+import { Button } from "@/components/ui/button";
+import { clearUserTimers } from '../utils/userTimers';
+import { RotateCcw } from 'lucide-react';
 
 const Header = ({ currentTime, apiStatus, isOnline }) => {
+  const handleClearTimers = () => {
+    if (window.confirm("Are you sure you want to clear all custom timers and reset to default?")) {
+      clearUserTimers();
+      window.location.reload();
+    }
+  };
   const getStatusDisplay = () => {
     if (!isOnline) {
       return {
@@ -57,6 +66,14 @@ const Header = ({ currentTime, apiStatus, isOnline }) => {
                 {formatTimeWithSeconds(currentTime)}
               </div>
             </div>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleClearTimers}
+              title="Reset Timers to Default"
+            >
+              <RotateCcw className="h-[1.2rem] w-[1.2rem]" />
+            </Button>
             <ModeToggle />
           </div>
         </div>

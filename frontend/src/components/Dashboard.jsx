@@ -5,6 +5,8 @@ import DailyProgress from './DailyProgress';
 import DailyTasks from './DailyTasks';
 import EventsSection from './EventsSection/EventsSection';
 import Footer from './Footer';
+import { tasksData } from '../utils/tasksData';
+import { getUserTimers, setUserTimers, DEFAULT_TIMERS } from '../utils/userTimers';
 import { useEventFilters } from '../hooks/useEventFilters';
 import * as Tabs from '@radix-ui/react-tabs';
 import useStore from '../store/useStore';
@@ -17,6 +19,7 @@ const Dashboard = () => {
   // Local state for UI that doesn't need to be global
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [tasksWithTimers, setTasksWithTimers] = useState(tasksData);
 
   // Get state and actions from the Zustand store
   const {
@@ -29,8 +32,9 @@ const Dashboard = () => {
   } = useStore();
 
   // Get active profile data using REACTIVE selectors
-  const dailyTasks = useStore(state => state.profileData[state.activeProfile]?.dailyTasks || {});
-  const completedEventTypes = useStore(state => state.profileData[state.activeProfile]?.completedEventTypes || {});
+  const activeProfile = useStore(state => state.activeProfile);
+  const dailyTasks = useStore(state => state.profileData[activeProfile]?.dailyTasks || {});
+  const completedEventTypes = useStore(state => state.profileData[activeProfile]?.completedEventTypes || {});
 
   const { eventFilters, updateEventFilters, isLoading } = useEventFilters();
 
@@ -52,6 +56,16 @@ const Dashboard = () => {
 
   // Effect for initial data load, timers, and online status
   useEffect(() => {
+    const userTimers = getUserTimers();
+    const mergedTasks = {
+      ...tasksData,
+      gatheringTasks: tasksData.gatheringTasks.map(task => ({
+        ...task,
+        availability: userTimers[task.id] || DEFAULT_TIMERS[task.id]
+      }))
+    };
+    setTasksWithTimers(mergedTasks);
+
     loadInitialData();
     checkAndResetDailyProgress();
 
@@ -102,7 +116,20 @@ const Dashboard = () => {
     [dailyTasks]
   );
 
-  // Removido botão de salvar manual - agora é automático via useStore
+  const handleTimersChange = (taskId, newTimers) => {
+    const userTimers = getUserTimers();
+    const updatedTimers = { ...userTimers, [taskId]: newTimers };
+    setUserTimers(updatedTimers);
+
+    const mergedTasks = {
+      ...tasksData,
+      gatheringTasks: tasksData.gatheringTasks.map(task => ({
+        ...task,
+        availability: updatedTimers[task.id] || DEFAULT_TIMERS[task.id]
+      }))
+    };
+    setTasksWithTimers(mergedTasks);
+  };
 
   if (isLoading) {
     return (
@@ -115,9 +142,6 @@ const Dashboard = () => {
     );
   }
 
-  // Get active profile from store
-  const activeProfile = useStore(state => state.activeProfile);
-  
   if (!activeProfile) {
     return null; // Route protection is handled in App.js
   }
@@ -172,10 +196,12 @@ const Dashboard = () => {
           </Tabs.List>
           <Tabs.Content value="tasks" className="py-6 focus:outline-none">
             <DailyTasks
+              tasks={tasksWithTimers}
               dailyTasks={dailyTasks}
               onTaskToggle={handleTaskToggle}
               calculateCategoryProgress={calculateCategoryProgress}
               currentTime={currentTime}
+              onTimersChange={handleTimersChange}
             />
           </Tabs.Content>
           <Tabs.Content value="events" className="py-6 focus:outline-none">

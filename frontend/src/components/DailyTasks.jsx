@@ -1,8 +1,10 @@
 // components/DailyTasks.jsx
 import React, { useCallback } from 'react';
 import { ArchiveBoxIcon, WrenchScrewdriverIcon, StarIcon } from '@heroicons/react/24/solid';
-import { tasksData } from '../utils/tasksData';
 import TaskTimer from './Tasks/TaskTimer';
+import TimerEditor from './Tasks/TimerEditor';
+import { Pencil } from 'lucide-react';
+import { Button } from './ui/button';
 
 const ProgressBar = React.memo(({ progress }) => (
   <div className="px-6 pb-4">
@@ -19,17 +21,18 @@ const ProgressBar = React.memo(({ progress }) => (
   </div>
 ));
 
-const TaskCard = React.memo(({ 
-  title, 
-  icon: Icon, 
-  description, 
-  tasks, 
-  category, 
+const TaskCard = React.memo(({
+  title,
+  icon: Icon,
+  description,
+  tasks,
+  category,
   progress,
   dailyTasks,
   onTaskToggle,
   copyToClipboard,
-  currentTime
+  currentTime,
+  onTimersChange
 }) => (
   <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1 transform-gpu">
     <div className="p-6 flex-grow">
@@ -53,7 +56,6 @@ const TaskCard = React.memo(({
                 <div className="flex items-center justify-between">
                   <span className={`text-foreground transition-colors ${dailyTasks[category]?.[task.id] ? 'line-through text-muted-foreground' : ''}`}>
                     {task.name}
-                    {/* Timer inline, só mostra se não disponível */}
                     {task.availability && (
                       <TaskTimer 
                         availability={task.availability} 
@@ -62,19 +64,32 @@ const TaskCard = React.memo(({
                       />
                     )}
                   </span>
-                  {task.waypoint && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        copyToClipboard(task.waypoint);
-                      }}
-                      aria-label={`Copy waypoint for ${task.name}`}
-                      className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150"
-                      title="Click to copy waypoint"
-                    >
-                      {task.waypoint}
-                    </button>
-                  )}
+                  <div className="flex items-center gap-2">
+                    {task.waypoint && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          copyToClipboard(task.waypoint);
+                        }}
+                        aria-label={`Copy waypoint for ${task.name}`}
+                        className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150"
+                        title="Click to copy waypoint"
+                      >
+                        {task.waypoint}
+                      </button>
+                    )}
+                    {task.availability !== undefined && onTimersChange && (
+                      <TimerEditor
+                        task={task}
+                        timers={task.availability}
+                        onSave={onTimersChange}
+                      >
+                        <Button variant="ghost" size="icon" className="h-6 w-6" title="Edit Timers" onClick={(e) => e.stopPropagation()}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                      </TimerEditor>
+                    )}
+                  </div>
                 </div>
               </div>
             </label>
@@ -86,7 +101,7 @@ const TaskCard = React.memo(({
   </div>
 ));
 
-const DailyTasks = ({ dailyTasks, onTaskToggle, calculateCategoryProgress, currentTime }) => {
+const DailyTasks = ({ tasks, dailyTasks, onTaskToggle, calculateCategoryProgress, currentTime, onTimersChange }) => {
   const copyToClipboard = useCallback((text) => {
     navigator.clipboard.writeText(text.trim()).catch(() => {
       const textArea = document.createElement('textarea');
@@ -104,39 +119,42 @@ const DailyTasks = ({ dailyTasks, onTaskToggle, calculateCategoryProgress, curre
         title="Daily Gathering"
         icon={ArchiveBoxIcon}
         description="Visit these waypoints for daily gathering"
-        tasks={tasksData.gatheringTasks}
+        tasks={tasks.gatheringTasks || []}
         category="gathering"
         progress={calculateCategoryProgress('gathering')}
         dailyTasks={dailyTasks}
         onTaskToggle={onTaskToggle}
         copyToClipboard={copyToClipboard}
         currentTime={currentTime}
+        onTimersChange={onTimersChange}
       />
       
       <TaskCard
         title="Daily Crafting"
         icon={WrenchScrewdriverIcon}
         description="Craft these items daily"
-        tasks={tasksData.craftingTasks}
+        tasks={tasks.craftingTasks || []}
         category="crafting"
         progress={calculateCategoryProgress('crafting')}
         dailyTasks={dailyTasks}
         onTaskToggle={onTaskToggle}
         copyToClipboard={copyToClipboard}
         currentTime={currentTime}
+        onTimersChange={onTimersChange}
       />
       
       <TaskCard
         title="Daily Specials"
         icon={StarIcon}
         description="PSNA and Home Instance tasks"
-        tasks={tasksData.specialTasks}
+        tasks={tasks.specialTasks || []}
         category="specials"
         progress={calculateCategoryProgress('specials')}
         dailyTasks={dailyTasks}
         onTaskToggle={onTaskToggle}
         copyToClipboard={copyToClipboard}
         currentTime={currentTime}
+        onTimersChange={onTimersChange}
       />
     </div>
   );

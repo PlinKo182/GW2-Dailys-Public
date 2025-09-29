@@ -3,14 +3,7 @@ export const tasksData = {
     {
       id: 'vine_bridge',
       name: 'Vine Bridge',
-      waypoint: '[&BIYHAAA=]',
-      availability: {
-        times: [
-          "00:50","01:50","02:50","03:50","04:50","05:50","06:50","07:50","08:50","09:50","10:50","11:50","12:50",
-          "13:50","14:50","15:50","16:50","17:50","18:50","19:50","20:50","21:50","22:50","23:50"
-        ],
-        duration: 10
-      }
+      waypoint: '[&BIYHAAA=]'
     },
     { id: 'prosperity', name: 'Prosperity', waypoint: '[&BHoHAAA=]' },
     { id: 'destinys_gorge', name: "Destiny's Gorge", waypoint: '[&BJMKAAA=]' }
