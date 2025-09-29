@@ -49,7 +49,7 @@ const Login = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-background">
+    <main className="flex items-center justify-center min-h-screen bg-background">
       <div className="w-full max-w-sm p-8 space-y-6 bg-card rounded-lg shadow-md">
         <div className="text-center">
             <h1 className="text-2xl font-bold text-card-foreground">Welcome</h1>
@@ -79,7 +79,7 @@ const Login = () => {
           </div>
         </form>
       </div>
-    </div>
+    </main>
   );
 };
 

@@ -16,6 +16,7 @@ const Dashboard = () => {
   // Local state for UI that doesn't need to be global
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [activeTab, setActiveTab] = useState('tasks');
 
   // Get state and actions from the Zustand store using selectors
   const notification = useStore(state => state.notification);
@@ -130,7 +131,7 @@ const Dashboard = () => {
 
         <DailyProgress overallProgress={calculateOverallProgress()} />
 
-        <Tabs.Root defaultValue="tasks" className="mt-8">
+        <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="mt-8">
           <Tabs.List className="border-b border-border flex items-center gap-4">
             <Tabs.Trigger
               value="tasks"
@@ -151,26 +152,28 @@ const Dashboard = () => {
               History
             </Tabs.Trigger>
           </Tabs.List>
-          <Tabs.Content value="tasks" className="py-6 focus:outline-none">
-            <DailyTasks
-              dailyTasks={dailyTasks}
-              onTaskToggle={handleTaskToggle}
-              calculateCategoryProgress={calculateCategoryProgress}
-              currentTime={currentTime}
-            />
-          </Tabs.Content>
-          <Tabs.Content value="events" className="py-6 focus:outline-none">
-            <EventsSection
-              completedEventTypes={completedEventTypes}
-              onEventToggle={handleEventToggle}
-              currentTime={currentTime}
-              eventFilters={eventFilters}
-              onEventFilterChange={updateEventFilters}
-            />
-          </Tabs.Content>
-          <Tabs.Content value="history" className="py-6 focus:outline-none">
-            <HistoryTab />
-          </Tabs.Content>
+
+          {/* Conditionally render tab content to prevent focus on hidden elements */}
+          <div className="py-6 focus:outline-none">
+            {activeTab === 'tasks' && (
+              <DailyTasks
+                dailyTasks={dailyTasks}
+                onTaskToggle={handleTaskToggle}
+                calculateCategoryProgress={calculateCategoryProgress}
+                currentTime={currentTime}
+              />
+            )}
+            {activeTab === 'events' && (
+              <EventsSection
+                completedEventTypes={completedEventTypes}
+                onEventToggle={handleEventToggle}
+                currentTime={currentTime}
+                eventFilters={eventFilters}
+                onEventFilterChange={updateEventFilters}
+              />
+            )}
+            {activeTab === 'history' && <HistoryTab />}
+          </div>
         </Tabs.Root>
       </main>
 
