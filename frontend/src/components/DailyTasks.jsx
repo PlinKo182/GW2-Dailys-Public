@@ -100,7 +100,9 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
   );
 };
 
-import PactSupplyCard from './PactSupplyCard'; // Import the new component
+import PactSupplyCard from './PactSupplyCard';
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const DailyTasks = ({ currentTime }) => {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -108,7 +110,10 @@ const DailyTasks = ({ currentTime }) => {
   const addCard = useStore((state) => state.addCard);
   const handleTaskToggle = useStore((state) => state.handleTaskToggle);
   const taskCompletion = useStore((state) => state.userData.taskCompletion);
-  const showPactSupplyCard = useStore((state) => state.showPactSupplyCard); // Get visibility state
+  const { showPactSupplyCard, togglePactSupplyCard } = useStore((state) => ({
+    showPactSupplyCard: state.showPactSupplyCard,
+    togglePactSupplyCard: state.togglePactSupplyCard,
+  }));
 
   const copyToClipboard = useCallback((text) => {
     if (!text) return;
@@ -117,7 +122,15 @@ const DailyTasks = ({ currentTime }) => {
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-end items-center gap-4 mb-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="pact-supply-toggle"
+            checked={showPactSupplyCard}
+            onCheckedChange={togglePactSupplyCard}
+          />
+          <Label htmlFor="pact-supply-toggle" className="text-sm">Pact Supply</Label>
+        </div>
         <Button onClick={() => setIsEditMode(!isEditMode)} variant="outline">
           {isEditMode ? 'Done Editing' : 'Edit Dailies'}
         </Button>

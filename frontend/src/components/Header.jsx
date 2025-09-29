@@ -2,16 +2,8 @@ import React from 'react';
 import { formatTimeWithSeconds } from '../utils/timeUtils';
 import { ModeToggle } from "@/components/ui/ThemeSwitcher";
 import { LogoutButton } from './ui/LogoutButton';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import useStore from '../store/useStore';
 
 const Header = ({ currentTime, apiStatus, isOnline }) => {
-  const { showPactSupplyCard, togglePactSupplyCard } = useStore(state => ({
-    showPactSupplyCard: state.showPactSupplyCard,
-    togglePactSupplyCard: state.togglePactSupplyCard,
-  }));
-
   const getStatusDisplay = () => {
     if (!isOnline) {
       return { text: 'Offline', className: 'bg-destructive/20 text-destructive-foreground' };
@@ -43,15 +35,7 @@ const Header = ({ currentTime, apiStatus, isOnline }) => {
             </div>
           </div>
           
-          <div className="flex items-center gap-6">
-            <div className="flex items-center space-x-2">
-              <Switch
-                id="pact-supply-toggle"
-                checked={showPactSupplyCard}
-                onCheckedChange={togglePactSupplyCard}
-              />
-              <Label htmlFor="pact-supply-toggle" className="text-sm">Pact Supply</Label>
-            </div>
+          <div className="flex items-center gap-4">
             <div className="text-right">
               <div className="text-sm text-muted-foreground">Current Time</div>
               <div className="text-lg font-mono text-primary">
