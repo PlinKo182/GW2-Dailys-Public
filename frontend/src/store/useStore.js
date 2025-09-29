@@ -14,10 +14,11 @@ let syncTimer = null;
 const useStore = create((set, get) => ({
   // --- NEW, SIMPLIFIED STATE ---
   currentUser: null,
-  userData: {
+  userData: { // For today's progress
     dailyTasks: defaultTasks,
     completedEventTypes: {},
   },
+  userHistory: {}, // For all historical progress data
   notification: null,
   lastResetDate: 0,
 
@@ -72,12 +73,13 @@ const useStore = create((set, get) => ({
   // Logs in an existing user
   loginUser: async (userName) => {
     try {
-      const progressData = await fetchProgress(userName);
+      const historyData = await fetchProgress(userName);
       const today = new Date().toISOString().slice(0, 10);
-      const todayEntry = progressData ? progressData[today] : null;
+      const todayEntry = historyData ? historyData[today] : null;
 
       set({
         currentUser: userName,
+        userHistory: historyData || {},
         userData: {
           dailyTasks: todayEntry?.dailyTasks || defaultTasks,
           completedEventTypes: todayEntry?.completedEventTypes || {},
@@ -93,7 +95,11 @@ const useStore = create((set, get) => ({
 
   logout: () => {
     localStorageAPI.clearAppData();
-    set({ currentUser: null, userData: { dailyTasks: defaultTasks, completedEventTypes: {} } });
+    set({
+        currentUser: null,
+        userData: { dailyTasks: defaultTasks, completedEventTypes: {} },
+        userHistory: {}
+    });
   },
 
   handleTaskToggle: (category, task) => {
