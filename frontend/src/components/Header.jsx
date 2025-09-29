@@ -1,6 +1,7 @@
 import React from 'react';
 import { formatTimeWithSeconds } from '../utils/timeUtils';
 import { ModeToggle } from "@/components/ui/ThemeSwitcher";
+import { LogoutButton } from './ui/LogoutButton';
 
 const Header = ({ currentTime, apiStatus, isOnline }) => {
   const getStatusDisplay = () => {
@@ -58,6 +59,7 @@ const Header = ({ currentTime, apiStatus, isOnline }) => {
               </div>
             </div>
             <ModeToggle />
+            <LogoutButton />
           </div>
         </div>
       </div>

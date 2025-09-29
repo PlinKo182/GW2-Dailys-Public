@@ -8,29 +8,22 @@ import Footer from './Footer';
 import { useEventFilters } from '../hooks/useEventFilters';
 import * as Tabs from '@radix-ui/react-tabs';
 import useStore from '../store/useStore';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { ProfileSwitcher } from './ui/ProfileSwitcher';
 import HistoryTab from './HistoryTab';
 
 const Dashboard = () => {
   // Local state for UI that doesn't need to be global
   const [currentTime, setCurrentTime] = useState(new Date());
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [activeTab, setActiveTab] = useState('tasks');
 
-  // Get state and actions from the Zustand store
-  const {
-    notification,
-    loadInitialData,
-    handleTaskToggle,
-    handleEventToggle,
-    setNotification,
-    checkAndResetDailyProgress,
-  } = useStore();
-
-  // Get active profile data using REACTIVE selectors
-  const dailyTasks = useStore(state => state.profileData[state.activeProfile]?.dailyTasks || {});
-  const completedEventTypes = useStore(state => state.profileData[state.activeProfile]?.completedEventTypes || {});
+  // Get state and actions from the Zustand store using selectors
+  const notification = useStore(state => state.notification);
+  const checkAndResetDailyProgress = useStore(state => state.checkAndResetDailyProgress);
+  const handleEventToggle = useStore(state => state.handleEventToggle);
+  const { taskCompletion, completedEventTypes } = useStore(state => state.userData);
+  const customTasks = useStore(state => state.customTasks);
 
   const { eventFilters, updateEventFilters, isLoading } = useEventFilters();
 
@@ -52,7 +45,6 @@ const Dashboard = () => {
 
   // Effect for initial data load, timers, and online status
   useEffect(() => {
-    loadInitialData();
     checkAndResetDailyProgress();
 
     const handleOnline = () => setIsOnline(true);
@@ -72,35 +64,17 @@ const Dashboard = () => {
       window.removeEventListener('offline', handleOffline);
       clearInterval(timeInterval);
     };
-  }, [loadInitialData, checkAndResetDailyProgress]);
+  }, [checkAndResetDailyProgress]);
 
-  // Progress calculation logic (now depends on store state)
+  // New progress calculation logic for custom tasks
   const calculateOverallProgress = useCallback(() => {
-    let totalTasks = 0;
-    let completedTasks = 0;
-    Object.values(dailyTasks).forEach((category) => {
-      Object.values(category).forEach((task) => {
-        totalTasks++;
-        if (task) completedTasks++;
-      });
-    });
-    return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  }, [dailyTasks]);
+    const allTasks = customTasks.flatMap(card => card.tasks);
+    const totalTasks = allTasks.length;
+    if (totalTasks === 0) return 0;
 
-  const calculateCategoryProgress = useCallback(
-    (category) => {
-      const tasks = dailyTasks[category];
-      if (!tasks) return { completed: 0, total: 0, percentage: 0 };
-      const totalTasks = Object.keys(tasks).length;
-      const completedTasks = Object.values(tasks).filter(Boolean).length;
-      return {
-        completed: completedTasks,
-        total: totalTasks,
-        percentage: totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0,
-      };
-    },
-    [dailyTasks]
-  );
+    const completedTasks = allTasks.filter(task => taskCompletion[task.id]).length;
+    return Math.round((completedTasks / totalTasks) * 100);
+  }, [customTasks, taskCompletion]);
 
   // Removido botão de salvar manual - agora é automático via useStore
 
@@ -113,13 +87,6 @@ const Dashboard = () => {
         </div>
       </div>
     );
-  }
-
-  // Get active profile from store
-  const activeProfile = useStore(state => state.activeProfile);
-  
-  if (!activeProfile) {
-    return null; // Route protection is handled in App.js
   }
 
   return (
@@ -142,14 +109,11 @@ const Dashboard = () => {
         <div className="mb-10">
           <h2 className="text-3xl font-bold mb-2">Daily Dashboard</h2>
           <p className="text-muted-foreground">Track your daily progress in Guild Wars 2</p>
-          <div className="flex items-center gap-4 mt-4 flex-wrap">
-            <ProfileSwitcher />
-          </div>
         </div>
 
         <DailyProgress overallProgress={calculateOverallProgress()} />
 
-        <Tabs.Root defaultValue="tasks" className="mt-8">
+        <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="mt-8">
           <Tabs.List className="border-b border-border flex items-center gap-4">
             <Tabs.Trigger
               value="tasks"
@@ -170,32 +134,29 @@ const Dashboard = () => {
               History
             </Tabs.Trigger>
           </Tabs.List>
-          <Tabs.Content value="tasks" className="py-6 focus:outline-none">
-            <DailyTasks
-              dailyTasks={dailyTasks}
-              onTaskToggle={handleTaskToggle}
-              calculateCategoryProgress={calculateCategoryProgress}
-              currentTime={currentTime}
-            />
-          </Tabs.Content>
-          <Tabs.Content value="events" className="py-6 focus:outline-none">
-            <EventsSection
-              completedEventTypes={completedEventTypes}
-              onEventToggle={handleEventToggle}
-              currentTime={currentTime}
-              eventFilters={eventFilters}
-              onEventFilterChange={updateEventFilters}
-            />
-          </Tabs.Content>
-          <Tabs.Content value="history" className="py-6 focus:outline-none">
-            <HistoryTab />
-          </Tabs.Content>
+
+          {/* Conditionally render tab content to prevent focus on hidden elements */}
+          <div className="py-6 focus:outline-none">
+            {activeTab === 'tasks' && (
+              <DailyTasks currentTime={currentTime} />
+            )}
+            {activeTab === 'events' && (
+              <EventsSection
+                completedEventTypes={completedEventTypes}
+                onEventToggle={handleEventToggle}
+                currentTime={currentTime}
+                eventFilters={eventFilters}
+                onEventFilterChange={updateEventFilters}
+              />
+            )}
+            {activeTab === 'history' && <HistoryTab />}
+          </div>
         </Tabs.Root>
       </main>
 
       <Footer />
     </div>
   );
-}
+};
 
 export default React.memo(Dashboard);

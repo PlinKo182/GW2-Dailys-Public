@@ -1,6 +1,4 @@
 import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import axios from 'axios';
 import useStore from '../store/useStore';
 import { eventsData } from '../utils/eventsData';
 import { useEventMap } from '../utils/eventUtils';
@@ -11,31 +9,9 @@ import {
   AccordionTrigger,
 } from "./ui/accordion";
 
-const API_BASE = '/api';
-
-const fetchUserProgress = async (userName) => {
-  const { data } = await axios.get(`${API_BASE}/progress/${encodeURIComponent(userName)}`);
-  if (!data.success) {
-    throw new Error(data.error || 'User not found');
-  }
-  return data.data.progressByDate || data.data;
-};
-
 const HistoryTab = () => {
-  const activeProfile = useStore((state) => state.activeProfile);
+  const userHistory = useStore((state) => state.userHistory);
   const eventMap = useEventMap(eventsData);
-
-  const { data: progressData, isLoading, error, isError, refetch } = useQuery({
-    queryKey: ['userProgress', activeProfile],
-    queryFn: () => fetchUserProgress(activeProfile),
-    enabled: !!activeProfile,
-    staleTime: 0, // Desabilita o cache
-  });
-
-  // Recarrega os dados quando o componente é montado
-  React.useEffect(() => {
-    refetch();
-  }, [refetch]);
 
   const getEventsByCategory = (dayData) => {
     const eventsByCategory = {};
@@ -97,29 +73,20 @@ const HistoryTab = () => {
     });
   };
 
-  if (isLoading) {
+  const sortedDates = userHistory ? Object.keys(userHistory).sort((a, b) => new Date(b) - new Date(a)) : [];
+
+  if (sortedDates.length === 0) {
     return (
-      <div className="text-center py-10">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-        <p className="text-muted-foreground">Loading history...</p>
+      <div className="text-center py-10 text-muted-foreground">
+        <p>No history found. Complete some tasks to see your progress here!</p>
       </div>
     );
   }
-
-  if (isError) {
-    return (
-      <div className="text-center py-10 text-destructive">
-        <p>Error loading history: {error.message}</p>
-      </div>
-    );
-  }
-
-  const sortedDates = progressData ? Object.keys(progressData).sort((a, b) => new Date(b) - new Date(a)) : [];
 
   return (
     <Accordion type="single" collapsible className="space-y-4">
       {sortedDates.map((date) => {
-  const dayData = progressData[date];
+        const dayData = userHistory[date];
         const eventsByCategory = getEventsByCategory(dayData);
         const tasksByCategory = getDailyTasksByCategory(dayData);
 

@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 import os
 from starlette.middleware.cors import CORSMiddleware
 import logging
@@ -56,6 +57,7 @@ DB_NAME = os.environ.get("MONGODB_DB", "gw2_daily_public")
 mongo_client = None
 db = None
 progress_collection = None
+users_collection = None
 
 if not MONGODB_URI:
     logger.error("MONGODB_URI not set. Configure the environment variable with the connection URI.")
@@ -70,7 +72,12 @@ else:
         logger.debug(f"MongoDB connected successfully. Using database '{DB_NAME}'")
         db = mongo_client[DB_NAME]
         progress_collection = db["daily_progress"]
+        users_collection = db["users"]
         
+        # Ensure unique index on userName for the users collection
+        users_collection.create_index("userName", unique=True)
+        logger.info("Ensured unique index on 'userName' in 'users' collection.")
+
         # Log available collections
         collections = db.list_collection_names() if LOG_LEVEL == "DEBUG" else []
         if LOG_LEVEL == "DEBUG":
@@ -97,6 +104,29 @@ class ProgressRequest(BaseModel):
     dailyTasks: dict
     completedEventTypes: dict = {}
     userName: str
+
+class UserRequest(BaseModel):
+    userName: str
+
+class FilterRequest(BaseModel):
+    userName: str
+    filters: dict
+
+class Task(BaseModel):
+    id: str
+    name: str
+    waypoint: str | None = None
+    hasTimer: bool = False
+    availability: dict | None = None
+
+class TaskCard(BaseModel):
+    id: str
+    title: str
+    tasks: list[Task]
+
+class CustomTasksRequest(BaseModel):
+    userName: str
+    customTasks: list[TaskCard]
 
 # Root endpoint
 @api_router.get("/")
@@ -166,9 +196,14 @@ async def mongo_health():
 @api_router.put("/progress")
 @api_router.post("/progress")
 async def save_progress(req: ProgressRequest):
-    if progress_collection is None:
+    if progress_collection is None or users_collection is None:
         return {"success": False, "error": "MongoDB not configured"}
     try:
+        # First, verify the user exists in the users collection
+        if not users_collection.find_one({"userName": req.userName}):
+            return {"success": False, "error": "User not found, cannot save progress."}
+
+        # If user exists, upsert their progress
         result = progress_collection.update_one(
             {"userName": req.userName},
             {
@@ -193,26 +228,33 @@ async def save_progress(req: ProgressRequest):
 # Endpoint to query user progress history
 @api_router.get("/progress/{userName}")
 async def get_user_progress(userName: str):
-    if progress_collection is None:
-        logger.error("Attempted MongoDB access but client is None")
-        logger.error(f"MONGODB_URI defined: {bool(MONGODB_URI)}")
-        logger.error(f"DB_NAME: {DB_NAME}")
+    if users_collection is None or progress_collection is None:
+        logger.error("Attempted MongoDB access but a collection is None")
         return {"success": False, "error": "MongoDB not configured"}
     try:
-        # Log connection state
-        try:
-            mongo_client.admin.command('ping')
-            logger.debug("MongoDB connection OK at request time")
-        except Exception as ping_err:
-            logger.error(f"MongoDB ping failed: {ping_err}")
-            raise Exception(f"MongoDB unavailable: {ping_err}")
+        # First, validate that the user exists in the main users collection.
+        user_doc = users_collection.find_one({"userName": userName})
+        if not user_doc:
+            logger.warning(f"Attempted to get progress for non-existent user: {userName}")
+            return {"success": False, "error": "User not found"}
 
-        # Try to fetch document
-        doc = progress_collection.find_one({"userName": userName}, {"_id": 0})
-        logger.debug(f"Search for userName={userName}: found={bool(doc)}")
-        if doc:
-            return {"success": True, "data": doc.get("progressByDate", {})}
-        return {"success": False, "error": "User not found"}
+        # If the user is valid, fetch their progress document.
+        progress_doc = progress_collection.find_one({"userName": userName}, {"_id": 0})
+
+        # Extract progress data, event filters, and custom tasks
+        progress_data = progress_doc.get("progressByDate", {}) if progress_doc else {}
+        event_filters = user_doc.get("eventFilters", None)
+        custom_tasks = user_doc.get("customTasks", None)
+
+        # Combine all into a single data object
+        response_data = {
+            "progress": progress_data,
+            "filters": event_filters,
+            "customTasks": custom_tasks
+        }
+
+        return {"success": True, "data": response_data}
+
     except Exception as e:
         logger.exception(f"Error getting progress for '{userName}':")
         return {
@@ -221,6 +263,59 @@ async def get_user_progress(userName: str):
             "details": str(e),
             "type": e.__class__.__name__
         }
+
+@api_router.post("/user")
+async def create_user(req: UserRequest):
+    if users_collection is None:
+        return {"success": False, "error": "MongoDB not configured"}
+    try:
+        # Create new user. The unique index on `userName` will prevent duplicates.
+        users_collection.insert_one({"userName": req.userName, "createdAt": datetime.utcnow()})
+        return {"success": True, "userName": req.userName}
+    except DuplicateKeyError:
+        logging.warning(f"Attempted to create duplicate user: {req.userName}")
+        return {"success": False, "error": "User already exists"}
+    except Exception as e:
+        logging.error(f"Error creating user: {e}")
+        return {"success": False, "error": "An unexpected error occurred during user creation."}
+
+@api_router.post("/user/filters")
+async def save_user_filters(req: FilterRequest):
+    if users_collection is None:
+        return {"success": False, "error": "MongoDB not configured"}
+    try:
+        result = users_collection.update_one(
+            {"userName": req.userName},
+            {"$set": {"eventFilters": req.filters}}
+        )
+
+        if result.matched_count == 0:
+            return {"success": False, "error": "User not found"}
+
+        return {"success": True, "modified_count": result.modified_count}
+    except Exception as e:
+        logging.error(f"Error saving user filters: {e}")
+        return {"success": False, "error": "An unexpected error occurred while saving filters."}
+
+@api_router.post("/user/tasks")
+async def save_custom_tasks(req: CustomTasksRequest):
+    if users_collection is None:
+        return {"success": False, "error": "MongoDB not configured"}
+    try:
+        # Pydantic models need to be converted to dicts for MongoDB
+        tasks_to_save = [card.model_dump() for card in req.customTasks]
+        result = users_collection.update_one(
+            {"userName": req.userName},
+            {"$set": {"customTasks": tasks_to_save}}
+        )
+
+        if result.matched_count == 0:
+            return {"success": False, "error": "User not found"}
+
+        return {"success": True, "modified_count": result.modified_count}
+    except Exception as e:
+        logging.error(f"Error saving custom tasks: {e}")
+        return {"success": False, "error": "An unexpected error occurred while saving tasks."}
 
 # Include router in the application
 app.include_router(api_router)
