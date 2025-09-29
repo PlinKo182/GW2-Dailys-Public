@@ -96,7 +96,10 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
 };
 
 const DailyTasks = ({ currentTime }) => {
-  const { customTasks, addCard, handleTaskToggle, taskCompletion } = useStore();
+  const customTasks = useStore((state) => state.customTasks);
+  const addCard = useStore((state) => state.addCard);
+  const handleTaskToggle = useStore((state) => state.handleTaskToggle);
+  const taskCompletion = useStore((state) => state.userData.taskCompletion);
 
   const copyToClipboard = useCallback((text) => {
     if (!text) return;
