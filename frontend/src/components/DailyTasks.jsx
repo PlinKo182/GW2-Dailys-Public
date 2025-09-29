@@ -100,12 +100,15 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
   );
 };
 
+import PactSupplyCard from './PactSupplyCard'; // Import the new component
+
 const DailyTasks = ({ currentTime }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const customTasks = useStore((state) => state.customTasks);
   const addCard = useStore((state) => state.addCard);
   const handleTaskToggle = useStore((state) => state.handleTaskToggle);
   const taskCompletion = useStore((state) => state.userData.taskCompletion);
+  const showPactSupplyCard = useStore((state) => state.showPactSupplyCard); // Get visibility state
 
   const copyToClipboard = useCallback((text) => {
     if (!text) return;
@@ -120,6 +123,10 @@ const DailyTasks = ({ currentTime }) => {
         </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {/* Conditionally render the Pact Supply Card */}
+        {showPactSupplyCard && <PactSupplyCard currentTime={currentTime} />}
+
+        {/* Render all the user's custom task cards */}
         {customTasks.map(card => (
           <CustomTaskCard
             key={card.id}

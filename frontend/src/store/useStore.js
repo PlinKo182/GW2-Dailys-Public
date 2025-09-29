@@ -46,21 +46,34 @@ const useStore = create((set, get) => ({
   eventFilters: {}, // For user-specific event filters
   notification: null,
   lastResetDate: 0,
+  showPactSupplyCard: true, // New state for showing the Pact Supply card
 
   // --- ACTIONS ---
 
   _saveState: () => {
-    const { currentUser, lastResetDate } = get();
-    // Only save the currentUser and lastResetDate to localStorage for session persistence
-    localStorageAPI.saveAppData({ currentUser, lastResetDate });
+    const { currentUser, lastResetDate, showPactSupplyCard } = get();
+    // Save app-level data like session and UI preferences
+    localStorageAPI.saveAppData({ currentUser, lastResetDate, showPactSupplyCard });
   },
 
   loadInitialData: () => {
     const appData = localStorageAPI.getAppData();
-    if (appData.currentUser) {
-      set({ currentUser: appData.currentUser, lastResetDate: appData.lastResetDate });
-      get().loginUser(appData.currentUser); // Log in and fetch data
+    if (appData) {
+        // Set UI preferences immediately
+        set({ showPactSupplyCard: appData.showPactSupplyCard !== false }); // Default to true if not set
+
+        // If a user session exists, log them in
+        if (appData.currentUser) {
+            set({ currentUser: appData.currentUser, lastResetDate: appData.lastResetDate });
+            get().loginUser(appData.currentUser);
+        }
     }
+  },
+
+  // Action to toggle the visibility of the Pact Supply card
+  togglePactSupplyCard: () => {
+    set(state => ({ showPactSupplyCard: !state.showPactSupplyCard }));
+    get()._saveState(); // Persist the change
   },
 
   _scheduleSync: () => {
