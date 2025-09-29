@@ -54,20 +54,40 @@ const PactSupplyCard = ({ currentTime }) => {
   const copyToClipboard = useCallback((text, npcName) => {
     if (!text) return;
     navigator.clipboard.writeText(text.trim());
-    setNotification({ type: 'success', message: `Copied ${npcName}'s chatlink!` });
+    const message = npcName === 'all'
+      ? 'Copied all Pact Supply chatlinks!'
+      : `Copied ${npcName}'s chatlink!`;
+    setNotification({ type: 'success', message });
     setTimeout(() => setNotification(null), 2000);
   }, [setNotification]);
+
+  const handleCopyAll = () => {
+    const allLinks = Object.values(dailyLinks).join(' ');
+    copyToClipboard(allLinks, 'all');
+  };
 
   return (
     <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300">
       <div className="p-6 flex-grow">
-        <h3 className="text-xl font-bold text-primary mb-4">Pact Supply Network</h3>
+        <h3
+          className="text-xl font-bold text-primary mb-4 cursor-pointer hover:underline"
+          onClick={handleCopyAll}
+          title="Click to copy all chatlinks"
+        >
+          Pact Supply Network Agent
+        </h3>
         <div className="space-y-3">
           {Object.entries(dailyLinks).map(([npc, chatlink]) => (
             <div key={npc} className="flex items-center justify-between">
               <span className="font-medium">{npc}</span>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-mono text-muted-foreground">{chatlink}</span>
+                <span
+                  className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
+                  onClick={() => copyToClipboard(chatlink, npc)}
+                  title="Click to copy waypoint"
+                >
+                  {chatlink}
+                </span>
                 <Button
                   variant="ghost"
                   size="icon"
