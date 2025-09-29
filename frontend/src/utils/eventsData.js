@@ -108,7 +108,7 @@ export const eventsData = {
     "Hard world bosses": {
       "Triple Trouble": {
         "duration_minutes": 30,
-        "utc_times": ["01:00", "04:00", "08:00", "12:30", "17:00", "20:00", "25:00"],
+        "utc_times": ["01:00", "04:00", "08:00", "12:30", "17:00", "20:00"],
         "waypoint": "Firthside Vigil Waypoint - [&BKoBAAA=]",
         "link": "https://wiki.guildwars2.com/wiki/Defeat_the_crimson_head_of_the_great_jungle_wurm",
         "rewards": {

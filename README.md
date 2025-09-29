@@ -31,7 +31,7 @@ python server.py
 Se estiver usando MongoDB Atlas, ajuste em `.env` (na raiz do projeto ou exporte no painel da Vercel):
 ```
 MONGODB_URI=mongodb+srv://usuario:senha@cluster.exemplo.mongodb.net/?retryWrites=true&w=majority&appName=GW2Daily
-MONGODB_DB=gw2_daily
+MONGODB_DB=gw2_daily_public
 ```
 
 Endpoints úteis:
@@ -47,7 +47,7 @@ Sem `MONGODB_URI` a API responde mas retorna `MongoDB não configurado` nos endp
 ```
 FRONTEND_URL=https://<seu-deployment>.vercel.app
 MONGODB_URI=... (se usar Atlas)
-MONGODB_DB=gw2_daily
+MONGODB_DB=gw2_daily_public
 REACT_APP_BACKEND_URL= (pode deixar vazio para usar /api relativo)
 ```
 
