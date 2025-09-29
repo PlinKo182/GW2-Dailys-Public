@@ -77,6 +77,10 @@ const useStore = create((set, get) => ({
       const today = new Date().toISOString().slice(0, 10);
       const todayEntry = historyData ? historyData[today] : null;
 
+      // Get the current UTC date to prevent the daily reset from firing incorrectly
+      const now = new Date();
+      const currentUTCDate = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+
       set({
         currentUser: userName,
         userHistory: historyData || {},
@@ -84,6 +88,7 @@ const useStore = create((set, get) => ({
           dailyTasks: todayEntry?.dailyTasks || defaultTasks,
           completedEventTypes: todayEntry?.completedEventTypes || {},
         },
+        lastResetDate: currentUTCDate, // Update the reset date to prevent race condition
       });
       get()._saveState();
     } catch (error) {
