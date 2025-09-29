@@ -58,16 +58,13 @@ const useStore = create((set, get) => ({
   addUser: async (userName) => {
     try {
       await createUser(userName);
-      set({
-        currentUser: userName,
-        userData: { dailyTasks: defaultTasks, completedEventTypes: {} },
-      });
-      get()._saveState();
+      // After creating the user, immediately log them in to fetch their (empty) data
+      await get().loginUser(userName);
       get().setNotification({ type: 'success', message: `User ${userName} created!` });
       setTimeout(() => get().setNotification(null), 4000);
     } catch (error) {
-      get().setNotification({ type: 'error', message: error.message });
-      setTimeout(() => get().setNotification(null), 4000);
+      // The loginUser action will handle its own error notifications if it fails
+      // But we still throw the error for the component to handle loading state
       throw error;
     }
   },

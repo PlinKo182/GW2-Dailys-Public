@@ -1,5 +1,6 @@
 from fastapi import FastAPI, APIRouter
 from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 import os
 from starlette.middleware.cors import CORSMiddleware
 import logging
@@ -73,6 +74,10 @@ else:
         progress_collection = db["daily_progress"]
         users_collection = db["users"]
         
+        # Ensure unique index on userName for the users collection
+        users_collection.create_index("userName", unique=True)
+        logger.info("Ensured unique index on 'userName' in 'users' collection.")
+
         # Log available collections
         collections = db.list_collection_names() if LOG_LEVEL == "DEBUG" else []
         if LOG_LEVEL == "DEBUG":
@@ -237,20 +242,15 @@ async def create_user(req: UserRequest):
     if users_collection is None:
         return {"success": False, "error": "MongoDB not configured"}
     try:
-        # Check if user already exists
-        if users_collection.find_one({"userName": req.userName}):
-            return {"success": False, "error": "User already exists"}
-
-        # Create new user
+        # Create new user. The unique index on `userName` will prevent duplicates.
         users_collection.insert_one({"userName": req.userName, "createdAt": datetime.utcnow()})
-
-        # Also create a default progress document for the user
-        progress_collection.insert_one({"userName": req.userName, "progressByDate": {}})
-
         return {"success": True, "userName": req.userName}
+    except DuplicateKeyError:
+        logging.warning(f"Attempted to create duplicate user: {req.userName}")
+        return {"success": False, "error": "User already exists"}
     except Exception as e:
         logging.error(f"Error creating user: {e}")
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": "An unexpected error occurred during user creation."}
 
 # Include router in the application
 app.include_router(api_router)
