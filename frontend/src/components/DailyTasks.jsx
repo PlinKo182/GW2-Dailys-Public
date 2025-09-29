@@ -101,6 +101,7 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
 };
 
 import PactSupplyCard from './PactSupplyCard';
+import FractalsCard from './FractalsCard'; // Import the new placeholder card
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -110,9 +111,16 @@ const DailyTasks = ({ currentTime }) => {
   const addCard = useStore((state) => state.addCard);
   const handleTaskToggle = useStore((state) => state.handleTaskToggle);
   const taskCompletion = useStore((state) => state.userData.taskCompletion);
-  const { showPactSupplyCard, togglePactSupplyCard } = useStore((state) => ({
+  const {
+    showPactSupplyCard,
+    togglePactSupplyCard,
+    showFractalsCard,
+    toggleFractalsCard
+  } = useStore((state) => ({
     showPactSupplyCard: state.showPactSupplyCard,
     togglePactSupplyCard: state.togglePactSupplyCard,
+    showFractalsCard: state.showFractalsCard,
+    toggleFractalsCard: state.toggleFractalsCard,
   }));
 
   const copyToClipboard = useCallback((text) => {
@@ -122,7 +130,15 @@ const DailyTasks = ({ currentTime }) => {
 
   return (
     <div>
-      <div className="flex justify-end items-center gap-4 mb-4">
+      <div className="flex justify-end items-center gap-6 mb-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="fractals-toggle"
+            checked={showFractalsCard}
+            onCheckedChange={toggleFractalsCard}
+          />
+          <Label htmlFor="fractals-toggle" className="text-sm">Fractals</Label>
+        </div>
         <div className="flex items-center space-x-2">
           <Switch
             id="pact-supply-toggle"
@@ -136,8 +152,9 @@ const DailyTasks = ({ currentTime }) => {
         </Button>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* Conditionally render the Pact Supply Card */}
+        {/* Conditionally render the special cards first */}
         {showPactSupplyCard && <PactSupplyCard currentTime={currentTime} />}
+        {showFractalsCard && <FractalsCard />}
 
         {/* Render all the user's custom task cards */}
         {customTasks.map(card => (
