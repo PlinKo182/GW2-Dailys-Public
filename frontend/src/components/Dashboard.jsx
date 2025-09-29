@@ -21,9 +21,9 @@ const Dashboard = () => {
   // Get state and actions from the Zustand store using selectors
   const notification = useStore(state => state.notification);
   const checkAndResetDailyProgress = useStore(state => state.checkAndResetDailyProgress);
-  const handleTaskToggle = useStore(state => state.handleTaskToggle);
   const handleEventToggle = useStore(state => state.handleEventToggle);
-  const { dailyTasks, completedEventTypes } = useStore(state => state.userData);
+  const { taskCompletion, completedEventTypes } = useStore(state => state.userData);
+  const customTasks = useStore(state => state.customTasks);
 
   const { eventFilters, updateEventFilters, isLoading } = useEventFilters();
 
@@ -66,33 +66,15 @@ const Dashboard = () => {
     };
   }, [checkAndResetDailyProgress]);
 
-  // Progress calculation logic (now depends on store state)
+  // New progress calculation logic for custom tasks
   const calculateOverallProgress = useCallback(() => {
-    let totalTasks = 0;
-    let completedTasks = 0;
-    Object.values(dailyTasks).forEach((category) => {
-      Object.values(category).forEach((task) => {
-        totalTasks++;
-        if (task) completedTasks++;
-      });
-    });
-    return totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  }, [dailyTasks]);
+    const allTasks = customTasks.flatMap(card => card.tasks);
+    const totalTasks = allTasks.length;
+    if (totalTasks === 0) return 0;
 
-  const calculateCategoryProgress = useCallback(
-    (category) => {
-      const tasks = dailyTasks[category];
-      if (!tasks) return { completed: 0, total: 0, percentage: 0 };
-      const totalTasks = Object.keys(tasks).length;
-      const completedTasks = Object.values(tasks).filter(Boolean).length;
-      return {
-        completed: completedTasks,
-        total: totalTasks,
-        percentage: totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0,
-      };
-    },
-    [dailyTasks]
-  );
+    const completedTasks = allTasks.filter(task => taskCompletion[task.id]).length;
+    return Math.round((completedTasks / totalTasks) * 100);
+  }, [customTasks, taskCompletion]);
 
   // Removido botão de salvar manual - agora é automático via useStore
 
@@ -156,12 +138,7 @@ const Dashboard = () => {
           {/* Conditionally render tab content to prevent focus on hidden elements */}
           <div className="py-6 focus:outline-none">
             {activeTab === 'tasks' && (
-              <DailyTasks
-                dailyTasks={dailyTasks}
-                onTaskToggle={handleTaskToggle}
-                calculateCategoryProgress={calculateCategoryProgress}
-                currentTime={currentTime}
-              />
+              <DailyTasks currentTime={currentTime} />
             )}
             {activeTab === 'events' && (
               <EventsSection

@@ -83,17 +83,26 @@ export async function saveUserFilters(userName, filters) {
   }
 }
 
+export async function saveCustomTasks(userName, customTasks) {
+  try {
+    await axiosInstance.post(`${API}/user/tasks`, { userName, customTasks });
+  } catch (e) {
+    console.warn('Falha ao salvar tarefas personalizadas:', e?.message);
+    // Não propaga o erro
+  }
+}
+
 export async function fetchProgress(userName) {
   try {
     const res = await axiosInstance.get(`${API}/progress/${encodeURIComponent(userName)}`);
     if (res.data && res.data.success) {
-      // The backend now returns { progress: {}, filters: {} }
+      // The backend now returns { progress: {}, filters: {}, customTasks: [] }
       return res.data.data;
     }
     if (res.data && !res.data.success) {
         throw new Error(res.data.error);
     }
-    return { progress: {}, filters: null }; // Return default shape on failure
+    return { progress: {}, filters: null, customTasks: null }; // Return default shape on failure
   } catch (e) {
     console.warn('Error fetching progress:', e?.message);
     throw e;

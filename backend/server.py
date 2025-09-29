@@ -112,6 +112,22 @@ class FilterRequest(BaseModel):
     userName: str
     filters: dict
 
+class Task(BaseModel):
+    id: str
+    name: str
+    waypoint: str | None = None
+    hasTimer: bool = False
+    availability: dict | None = None
+
+class TaskCard(BaseModel):
+    id: str
+    title: str
+    tasks: list[Task]
+
+class CustomTasksRequest(BaseModel):
+    userName: str
+    customTasks: list[TaskCard]
+
 # Root endpoint
 @api_router.get("/")
 async def root():
@@ -225,14 +241,16 @@ async def get_user_progress(userName: str):
         # If the user is valid, fetch their progress document.
         progress_doc = progress_collection.find_one({"userName": userName}, {"_id": 0})
 
-        # Extract progress data and event filters
+        # Extract progress data, event filters, and custom tasks
         progress_data = progress_doc.get("progressByDate", {}) if progress_doc else {}
-        event_filters = user_doc.get("eventFilters", None) # Return None if not set
+        event_filters = user_doc.get("eventFilters", None)
+        custom_tasks = user_doc.get("customTasks", None)
 
-        # Combine both into a single data object
+        # Combine all into a single data object
         response_data = {
             "progress": progress_data,
-            "filters": event_filters
+            "filters": event_filters,
+            "customTasks": custom_tasks
         }
 
         return {"success": True, "data": response_data}
@@ -278,6 +296,26 @@ async def save_user_filters(req: FilterRequest):
     except Exception as e:
         logging.error(f"Error saving user filters: {e}")
         return {"success": False, "error": "An unexpected error occurred while saving filters."}
+
+@api_router.post("/user/tasks")
+async def save_custom_tasks(req: CustomTasksRequest):
+    if users_collection is None:
+        return {"success": False, "error": "MongoDB not configured"}
+    try:
+        # Pydantic models need to be converted to dicts for MongoDB
+        tasks_to_save = [card.model_dump() for card in req.customTasks]
+        result = users_collection.update_one(
+            {"userName": req.userName},
+            {"$set": {"customTasks": tasks_to_save}}
+        )
+
+        if result.matched_count == 0:
+            return {"success": False, "error": "User not found"}
+
+        return {"success": True, "modified_count": result.modified_count}
+    except Exception as e:
+        logging.error(f"Error saving custom tasks: {e}")
+        return {"success": False, "error": "An unexpected error occurred while saving tasks."}
 
 # Include router in the application
 app.include_router(api_router)

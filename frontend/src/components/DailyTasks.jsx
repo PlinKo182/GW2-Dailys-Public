@@ -1,8 +1,10 @@
-// components/DailyTasks.jsx
-import React, { useCallback } from 'react';
-import { ArchiveBoxIcon, WrenchScrewdriverIcon, StarIcon } from '@heroicons/react/24/solid';
-import { tasksData } from '../utils/tasksData';
-import TaskTimer from './Tasks/TaskTimer';
+import React, { useState, useCallback } from 'react';
+import useStore from '../store/useStore';
+import CustomTaskItem from './Tasks/CustomTaskItem';
+import TaskEditModal from './Tasks/TaskEditModal';
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 
 const ProgressBar = React.memo(({ progress }) => (
   <div className="px-6 pb-4">
@@ -19,125 +21,105 @@ const ProgressBar = React.memo(({ progress }) => (
   </div>
 ));
 
-const TaskCard = React.memo(({ 
-  title, 
-  icon: Icon, 
-  description, 
-  tasks, 
-  category, 
-  progress,
-  dailyTasks,
-  onTaskToggle,
-  copyToClipboard,
-  currentTime
-}) => (
-  <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300 hover:-translate-y-1 transform-gpu">
-    <div className="p-6 flex-grow">
-      <div className="flex items-center gap-2 mb-2">
-        <Icon className="w-5 h-5 text-primary" />
-        <h3 className="text-xl font-bold text-primary">{title}</h3>
-      </div>
-      <p className="text-sm text-muted-foreground mb-4">{description}</p>
-      <div className="space-y-4">
-        {tasks.map((task) => (
-          <div key={task.id} className="group">
-            <label htmlFor={`task-${category}-${task.id}`} className="flex items-center space-x-3 cursor-pointer">
-              <input
-                id={`task-${category}-${task.id}`}
-                type="checkbox"
-                checked={dailyTasks[category]?.[task.id] || false}
-                onChange={() => onTaskToggle(category, task.id)}
-                className="rounded bg-muted border-border text-primary focus:ring-ring/50 focus:ring-2"
-              />
-              <div className="flex-1">
-                <div className="flex items-center justify-between">
-                  <span className={`text-foreground transition-colors ${dailyTasks[category]?.[task.id] ? 'line-through text-muted-foreground' : ''}`}>
-                    {task.name}
-                    {/* Timer inline, só mostra se não disponível */}
-                    {task.availability && (
-                      <TaskTimer 
-                        availability={task.availability} 
-                        currentTime={currentTime}
-                        inline
-                      />
-                    )}
-                  </span>
-                  {task.waypoint && (
-                    <button
-                      onClick={(e) => {
-                        e.preventDefault();
-                        copyToClipboard(task.waypoint);
-                      }}
-                      aria-label={`Copy waypoint for ${task.name}`}
-                      className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150"
-                      title="Click to copy waypoint"
-                    >
-                      {task.waypoint}
-                    </button>
-                  )}
-                </div>
-              </div>
-            </label>
-          </div>
-        ))}
-      </div>
-    </div>
-    <ProgressBar progress={progress} />
-  </div>
-));
+const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, currentTime }) => {
+  const { addTask, updateTask, deleteTask, updateCardTitle, deleteCard } = useStore();
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState(card.title);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState(null);
 
-const DailyTasks = ({ dailyTasks, onTaskToggle, calculateCategoryProgress, currentTime }) => {
+  const cardProgress = useCallback(() => {
+    const totalTasks = card.tasks.length;
+    if (totalTasks === 0) return { completed: 0, total: 0, percentage: 0 };
+    const completedTasks = card.tasks.filter(task => taskCompletion[task.id]).length;
+    return {
+      completed: completedTasks,
+      total: totalTasks,
+      percentage: Math.round((completedTasks / totalTasks) * 100),
+    };
+  }, [card.tasks, taskCompletion]);
+
+  const handleTitleChange = (e) => setTitle(e.target.value);
+  const handleTitleBlur = () => {
+    setIsEditingTitle(false);
+    updateCardTitle(card.id, title);
+  };
+  const handleTitleKeyDown = (e) => e.key === 'Enter' && handleTitleBlur();
+  const handleOpenModal = (task = null) => {
+    setEditingTask(task);
+    setIsModalOpen(true);
+  };
+  const handleSaveTask = (taskData) => {
+    if (editingTask) {
+      updateTask(card.id, editingTask.id, taskData);
+    } else {
+      addTask(card.id, taskData.name);
+    }
+    setIsModalOpen(false);
+    setEditingTask(null);
+  };
+
+  return (
+    <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300">
+      <div className="p-6 flex-grow">
+        <div className="flex items-center justify-between mb-4">
+          {isEditingTitle ? (
+            <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
+          ) : (
+            <h3 className="text-xl font-bold text-primary cursor-pointer" onClick={() => setIsEditingTitle(true)}>{card.title}</h3>
+          )}
+          <div className="flex items-center space-x-1">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCard(card.id)} title="Delete card"><TrashIcon className="h-4 w-4" /></Button>
+          </div>
+        </div>
+        <div className="space-y-4">
+          {card.tasks.map(task => (
+            <CustomTaskItem
+              key={task.id}
+              task={task}
+              isCompleted={taskCompletion[task.id] || false}
+              onToggle={() => onTaskToggle(task.id)}
+              onUpdate={() => handleOpenModal(task)}
+              onDelete={() => deleteTask(card.id, task.id)}
+              onCopyWaypoint={onCopyWaypoint}
+              currentTime={currentTime}
+            />
+          ))}
+        </div>
+        <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => handleOpenModal()}><PlusCircleIcon className="h-4 w-4 mr-2" />Add Task</Button>
+      </div>
+      <ProgressBar progress={cardProgress()} />
+      <TaskEditModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} onSave={handleSaveTask} task={editingTask} />
+    </div>
+  );
+};
+
+const DailyTasks = ({ currentTime }) => {
+  const { customTasks, addCard, handleTaskToggle, taskCompletion } = useStore();
+
   const copyToClipboard = useCallback((text) => {
-    navigator.clipboard.writeText(text.trim()).catch(() => {
-      const textArea = document.createElement('textarea');
-      textArea.value = text.trim();
-      document.body.appendChild(textArea);
-      textArea.select();
-      document.execCommand('copy');
-      document.body.removeChild(textArea);
-    });
+    if (!text) return;
+    navigator.clipboard.writeText(text.trim());
   }, []);
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-      <TaskCard
-        title="Daily Gathering"
-        icon={ArchiveBoxIcon}
-        description="Visit these waypoints for daily gathering"
-        tasks={tasksData.gatheringTasks}
-        category="gathering"
-        progress={calculateCategoryProgress('gathering')}
-        dailyTasks={dailyTasks}
-        onTaskToggle={onTaskToggle}
-        copyToClipboard={copyToClipboard}
-        currentTime={currentTime}
-      />
-      
-      <TaskCard
-        title="Daily Crafting"
-        icon={WrenchScrewdriverIcon}
-        description="Craft these items daily"
-        tasks={tasksData.craftingTasks}
-        category="crafting"
-        progress={calculateCategoryProgress('crafting')}
-        dailyTasks={dailyTasks}
-        onTaskToggle={onTaskToggle}
-        copyToClipboard={copyToClipboard}
-        currentTime={currentTime}
-      />
-      
-      <TaskCard
-        title="Daily Specials"
-        icon={StarIcon}
-        description="PSNA and Home Instance tasks"
-        tasks={tasksData.specialTasks}
-        category="specials"
-        progress={calculateCategoryProgress('specials')}
-        dailyTasks={dailyTasks}
-        onTaskToggle={onTaskToggle}
-        copyToClipboard={copyToClipboard}
-        currentTime={currentTime}
-      />
+    <div>
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+        {customTasks.map(card => (
+          <CustomTaskCard
+            key={card.id}
+            card={card}
+            taskCompletion={taskCompletion}
+            onTaskToggle={handleTaskToggle}
+            onCopyWaypoint={copyToClipboard}
+            currentTime={currentTime}
+          />
+        ))}
+      </div>
+      <div className="mt-6 text-center">
+        <Button onClick={() => addCard('New Daily Card')}><PlusCircleIcon className="h-5 w-5 mr-2" />Add New Card</Button>
+      </div>
     </div>
   );
 };

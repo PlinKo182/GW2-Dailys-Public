@@ -3,13 +3,21 @@
   "version": "1.0.0",
   "description": "Guild Wars 2 daily progress tracker",
   "scripts": {
-  "build": "cd frontend && npm install --no-audit --no-fund && npm run build",
+    "build": "cd frontend && npm install --no-audit --no-fund && npm run build",
     "postbuild": "node scripts/copy-static.js",
     "start": "cd frontend && yarn start",
     "dev": "cd frontend && yarn start",
     "backend": "cd backend && python server.py"
   },
-  "keywords": ["guild-wars-2", "tracker", "gaming", "progress"],
+  "keywords": [
+    "guild-wars-2",
+    "tracker",
+    "gaming",
+    "progress"
+  ],
   "author": "GW2-Daily",
-  "license": "MIT"
+  "license": "MIT",
+  "dependencies": {
+    "uuid": "^13.0.0"
+  }
 }
