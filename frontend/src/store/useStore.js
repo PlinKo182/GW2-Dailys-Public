@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { localStorageAPI, fetchProgress, saveProgress, createUser } from '../services/api';
+import { localStorageAPI, fetchProgress, saveProgress, createUser, saveUserFilters } from '../services/api';
 import { eventsData } from '../utils/eventsData';
 
 const defaultTasks = {
@@ -9,7 +9,9 @@ const defaultTasks = {
 };
 
 const SYNC_DEBOUNCE = 800;
+const FILTER_SYNC_DEBOUNCE = 1000;
 let syncTimer = null;
+let filterSyncTimer = null;
 
 const useStore = create((set, get) => ({
   // --- NEW, SIMPLIFIED STATE ---
@@ -19,6 +21,7 @@ const useStore = create((set, get) => ({
     completedEventTypes: {},
   },
   userHistory: {}, // For all historical progress data
+  eventFilters: {}, // For user-specific event filters
   notification: null,
   lastResetDate: 0,
 
@@ -73,9 +76,9 @@ const useStore = create((set, get) => ({
   // Logs in an existing user
   loginUser: async (userName) => {
     try {
-      const historyData = await fetchProgress(userName);
+      const { progress, filters } = await fetchProgress(userName);
       const today = new Date().toISOString().slice(0, 10);
-      const todayEntry = historyData ? historyData[today] : null;
+      const todayEntry = progress ? progress[today] : null;
 
       // Get the current UTC date to prevent the daily reset from firing incorrectly
       const now = new Date();
@@ -83,7 +86,8 @@ const useStore = create((set, get) => ({
 
       set({
         currentUser: userName,
-        userHistory: historyData || {},
+        userHistory: progress || {},
+        eventFilters: filters || {},
         userData: {
           dailyTasks: todayEntry?.dailyTasks || defaultTasks,
           completedEventTypes: todayEntry?.completedEventTypes || {},
@@ -96,6 +100,18 @@ const useStore = create((set, get) => ({
       setTimeout(() => get().setNotification(null), 4000);
       throw error;
     }
+  },
+
+  updateEventFilters: (newFilters) => {
+    const { currentUser } = get();
+    if (!currentUser) return;
+
+    set({ eventFilters: newFilters });
+
+    clearTimeout(filterSyncTimer);
+    filterSyncTimer = setTimeout(() => {
+      saveUserFilters(currentUser, newFilters);
+    }, FILTER_SYNC_DEBOUNCE);
   },
 
   logout: () => {

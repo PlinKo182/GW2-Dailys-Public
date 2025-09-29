@@ -108,6 +108,10 @@ class ProgressRequest(BaseModel):
 class UserRequest(BaseModel):
     userName: str
 
+class FilterRequest(BaseModel):
+    userName: str
+    filters: dict
+
 # Root endpoint
 @api_router.get("/")
 async def root():
@@ -213,19 +217,25 @@ async def get_user_progress(userName: str):
         return {"success": False, "error": "MongoDB not configured"}
     try:
         # First, validate that the user exists in the main users collection.
-        if not users_collection.find_one({"userName": userName}):
+        user_doc = users_collection.find_one({"userName": userName})
+        if not user_doc:
             logger.warning(f"Attempted to get progress for non-existent user: {userName}")
             return {"success": False, "error": "User not found"}
 
         # If the user is valid, fetch their progress document.
-        # It's okay if this is None; it just means they have no progress saved yet.
         progress_doc = progress_collection.find_one({"userName": userName}, {"_id": 0})
 
-        logger.debug(f"Progress search for userName={userName}: found={bool(progress_doc)}")
-
-        # Return the progress data if it exists, otherwise return an empty object.
+        # Extract progress data and event filters
         progress_data = progress_doc.get("progressByDate", {}) if progress_doc else {}
-        return {"success": True, "data": progress_data}
+        event_filters = user_doc.get("eventFilters", None) # Return None if not set
+
+        # Combine both into a single data object
+        response_data = {
+            "progress": progress_data,
+            "filters": event_filters
+        }
+
+        return {"success": True, "data": response_data}
 
     except Exception as e:
         logger.exception(f"Error getting progress for '{userName}':")
@@ -250,6 +260,24 @@ async def create_user(req: UserRequest):
     except Exception as e:
         logging.error(f"Error creating user: {e}")
         return {"success": False, "error": "An unexpected error occurred during user creation."}
+
+@api_router.post("/user/filters")
+async def save_user_filters(req: FilterRequest):
+    if users_collection is None:
+        return {"success": False, "error": "MongoDB not configured"}
+    try:
+        result = users_collection.update_one(
+            {"userName": req.userName},
+            {"$set": {"eventFilters": req.filters}}
+        )
+
+        if result.matched_count == 0:
+            return {"success": False, "error": "User not found"}
+
+        return {"success": True, "modified_count": result.modified_count}
+    except Exception as e:
+        logging.error(f"Error saving user filters: {e}")
+        return {"success": False, "error": "An unexpected error occurred while saving filters."}
 
 # Include router in the application
 app.include_router(api_router)

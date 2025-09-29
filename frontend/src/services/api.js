@@ -74,16 +74,26 @@ export async function createUser(userName) {
   }
 }
 
+export async function saveUserFilters(userName, filters) {
+  try {
+    await axiosInstance.post(`${API}/user/filters`, { userName, filters });
+  } catch (e) {
+    console.warn('Falha ao salvar filtros do utilizador:', e?.message);
+    // Não propaga o erro para não interromper a experiência do utilizador
+  }
+}
+
 export async function fetchProgress(userName) {
   try {
     const res = await axiosInstance.get(`${API}/progress/${encodeURIComponent(userName)}`);
     if (res.data && res.data.success) {
+      // The backend now returns { progress: {}, filters: {} }
       return res.data.data;
     }
     if (res.data && !res.data.success) {
         throw new Error(res.data.error);
     }
-    return {};
+    return { progress: {}, filters: null }; // Return default shape on failure
   } catch (e) {
     console.warn('Error fetching progress:', e?.message);
     throw e;
