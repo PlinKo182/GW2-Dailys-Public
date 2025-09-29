@@ -21,7 +21,7 @@ const ProgressBar = React.memo(({ progress }) => (
   </div>
 ));
 
-const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, currentTime }) => {
+const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, currentTime, isEditMode }) => {
   const { addTask, updateTask, deleteTask, updateCardTitle, deleteCard } = useStore();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [title, setTitle] = useState(card.title);
@@ -63,15 +63,17 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
     <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300">
       <div className="p-6 flex-grow">
         <div className="flex items-center justify-between mb-4">
-          {isEditingTitle ? (
+          {isEditMode && isEditingTitle ? (
             <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
           ) : (
-            <h3 className="text-xl font-bold text-primary cursor-pointer" onClick={() => setIsEditingTitle(true)}>{card.title}</h3>
+            <h3 className="text-xl font-bold text-primary">{card.title}</h3>
           )}
-          <div className="flex items-center space-x-1">
-            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
-            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCard(card.id)} title="Delete card"><TrashIcon className="h-4 w-4" /></Button>
-          </div>
+          {isEditMode && (
+            <div className="flex items-center space-x-1">
+              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
+              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCard(card.id)} title="Delete card"><TrashIcon className="h-4 w-4" /></Button>
+            </div>
+          )}
         </div>
         <div className="space-y-4">
           {card.tasks.map(task => (
@@ -84,10 +86,13 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
               onDelete={() => deleteTask(card.id, task.id)}
               onCopyWaypoint={onCopyWaypoint}
               currentTime={currentTime}
+              isEditMode={isEditMode}
             />
           ))}
         </div>
-        <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => handleOpenModal()}><PlusCircleIcon className="h-4 w-4 mr-2" />Add Task</Button>
+        {isEditMode && (
+          <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => handleOpenModal()}><PlusCircleIcon className="h-4 w-4 mr-2" />Add Task</Button>
+        )}
       </div>
       <ProgressBar progress={cardProgress()} />
       <TaskEditModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} onSave={handleSaveTask} task={editingTask} />
@@ -96,6 +101,7 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
 };
 
 const DailyTasks = ({ currentTime }) => {
+  const [isEditMode, setIsEditMode] = useState(false);
   const customTasks = useStore((state) => state.customTasks);
   const addCard = useStore((state) => state.addCard);
   const handleTaskToggle = useStore((state) => state.handleTaskToggle);
@@ -108,6 +114,11 @@ const DailyTasks = ({ currentTime }) => {
 
   return (
     <div>
+      <div className="flex justify-end mb-4">
+        <Button onClick={() => setIsEditMode(!isEditMode)} variant="outline">
+          {isEditMode ? 'Done Editing' : 'Edit Dailies'}
+        </Button>
+      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {customTasks.map(card => (
           <CustomTaskCard
@@ -117,12 +128,15 @@ const DailyTasks = ({ currentTime }) => {
             onTaskToggle={handleTaskToggle}
             onCopyWaypoint={copyToClipboard}
             currentTime={currentTime}
+            isEditMode={isEditMode}
           />
         ))}
       </div>
-      <div className="mt-6 text-center">
-        <Button onClick={() => addCard('New Daily Card')}><PlusCircleIcon className="h-5 w-5 mr-2" />Add New Card</Button>
-      </div>
+      {isEditMode && (
+        <div className="mt-6 text-center">
+          <Button onClick={() => addCard('New Daily Card')}><PlusCircleIcon className="h-5 w-5 mr-2" />Add New Card</Button>
+        </div>
+      )}
     </div>
   );
 };
