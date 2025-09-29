@@ -126,19 +126,31 @@ const useStore = create((set, get) => ({
   handleTaskToggle: (category, task) => {
     if (!get().currentUser) return;
 
-    set((state) => ({
-      userData: {
-        ...state.userData,
-        dailyTasks: {
-          ...state.userData.dailyTasks,
-          [category]: {
-            ...state.userData.dailyTasks[category],
-            [task]: !state.userData.dailyTasks[category][task],
-          },
+    set((state) => {
+      const today = new Date().toISOString().slice(0, 10);
+
+      const newDailyTasks = {
+        ...state.userData.dailyTasks,
+        [category]: {
+          ...state.userData.dailyTasks[category],
+          [task]: !state.userData.dailyTasks[category][task],
         },
-      },
-    }));
-    // No local save here, sync will handle it
+      };
+
+      const newUserHistory = { ...state.userHistory };
+      if (!newUserHistory[today]) {
+        newUserHistory[today] = { dailyTasks: {}, completedEventTypes: state.userData.completedEventTypes };
+      }
+      newUserHistory[today].dailyTasks = newDailyTasks;
+
+      return {
+        userData: {
+          ...state.userData,
+          dailyTasks: newDailyTasks,
+        },
+        userHistory: newUserHistory,
+      };
+    });
     get()._scheduleSync();
   },
 
@@ -146,6 +158,7 @@ const useStore = create((set, get) => ({
     if (!get().currentUser || typeof eventKey !== 'string' || eventKey.startsWith('daily')) return;
 
     set((state) => {
+        const today = new Date().toISOString().slice(0, 10);
         const newCompletedEventTypes = { ...(state.userData.completedEventTypes || {}) };
 
         // This logic seems overly complex, but we'll retain it for now.
@@ -178,12 +191,19 @@ const useStore = create((set, get) => ({
             });
             newCompletedEventTypes[fullEventPath] = true;
         }
+
+        const newUserHistory = { ...state.userHistory };
+        if (!newUserHistory[today]) {
+          newUserHistory[today] = { dailyTasks: state.userData.dailyTasks, completedEventTypes: {} };
+        }
+        newUserHistory[today].completedEventTypes = newCompletedEventTypes;
         
         return {
             userData: {
                 ...state.userData,
                 completedEventTypes: newCompletedEventTypes
-            }
+            },
+            userHistory: newUserHistory
         };
     });
     get()._scheduleSync();
