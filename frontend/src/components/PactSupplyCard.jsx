@@ -51,19 +51,21 @@ const PactSupplyCard = ({ currentTime }) => {
     setDailyLinks(getPsnaChatlinks(currentTime));
   }, [currentTime]);
 
-  const copyToClipboard = useCallback((text, npcName) => {
+  const copyToClipboard = useCallback((text, isAll = false) => {
     if (!text) return;
     navigator.clipboard.writeText(text.trim());
-    const message = npcName === 'all'
+    const message = isAll
       ? 'Copied all Pact Supply chatlinks!'
-      : `Copied ${npcName}'s chatlink!`;
+      : `Copied chatlink for ${text.split(' - ')[0]}!`;
     setNotification({ type: 'success', message });
     setTimeout(() => setNotification(null), 2000);
   }, [setNotification]);
 
   const handleCopyAll = () => {
-    const allLinks = Object.values(dailyLinks).join(' ');
-    copyToClipboard(allLinks, 'all');
+    const allLinks = Object.entries(dailyLinks)
+      .map(([npc, chatlink]) => `${npc} - ${chatlink}`)
+      .join(' ');
+    copyToClipboard(allLinks, true);
   };
 
   return (
@@ -80,24 +82,13 @@ const PactSupplyCard = ({ currentTime }) => {
           {Object.entries(dailyLinks).map(([npc, chatlink]) => (
             <div key={npc} className="flex items-center justify-between">
               <span className="font-medium">{npc}</span>
-              <div className="flex items-center gap-2">
-                <span
-                  className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
-                  onClick={() => copyToClipboard(chatlink, npc)}
-                  title="Click to copy waypoint"
-                >
-                  {chatlink}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7"
-                  onClick={() => copyToClipboard(chatlink, npc)}
-                  title={`Copy ${npc}'s chatlink`}
-                >
-                  <ClipboardDocumentIcon className="h-4 w-4" />
-                </Button>
-              </div>
+              <span
+                className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
+                onClick={() => copyToClipboard(`${npc} - ${chatlink}`)}
+                title="Click to copy chatlink"
+              >
+                {chatlink}
+              </span>
             </div>
           ))}
         </div>
