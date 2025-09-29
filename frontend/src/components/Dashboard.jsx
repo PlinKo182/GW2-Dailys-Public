@@ -44,7 +44,6 @@ const Dashboard = () => {
 
   // Effect for initial data load, timers, and online status
   useEffect(() => {
-    loadInitialData();
     checkAndResetDailyProgress();
 
     const handleOnline = () => setIsOnline(true);
