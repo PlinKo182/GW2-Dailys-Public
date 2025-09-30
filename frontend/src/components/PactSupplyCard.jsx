@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Copy } from 'lucide-react';
+import { Copy, Package } from 'lucide-react';
 import useStore from '../store/useStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
@@ -91,7 +91,10 @@ const PactSupplyCard = ({ currentTime }) => {
                 onClick={handleToggleAll}
                 className={`cursor-pointer hover:underline ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
               >
-                Pact Supply Network Agent
+                <div className="flex items-center gap-2">
+                  <Package className="h-5 w-5" />
+                  Pact Supply Network Agent
+                </div>
               </CardTitle>
             </TooltipTrigger>
             <TooltipContent>

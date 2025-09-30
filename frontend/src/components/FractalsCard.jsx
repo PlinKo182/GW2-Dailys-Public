@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Award, List } from 'lucide-react';
+import { Award, List, Gem } from 'lucide-react';
 import useStore from '../store/useStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
@@ -64,7 +64,10 @@ const FractalsCard = () => {
         const sortedDailies = Array.from(dailyFractals).sort()
           .map(name => ({ id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}`, name }));
 
-        setFractalTasks({ recommended: sortedRecommended, dailies: sortedDailies });
+        setFractalTasks({
+          recommended: sortedRecommended,
+          dailies: sortedDailies,
+        });
       } catch (err) {
         setError("Failed to fetch daily fractals. The API might be down.");
       } finally {
@@ -121,8 +124,8 @@ const FractalsCard = () => {
   };
 
   const allFractalTaskIds = [
-    ...fractalTasks.recommended.map(t => t.id),
-    ...fractalTasks.dailies.map(t => t.id)
+    ...(fractalTasks.recommended || []).map(t => t.id),
+    ...(fractalTasks.dailies || []).map(t => t.id)
   ];
 
   const completedFractalTasks = allFractalTaskIds.filter(id => taskCompletion[id]);
@@ -147,7 +150,10 @@ const FractalsCard = () => {
                 onClick={handleToggleAllFractals}
                 className={`cursor-pointer hover:underline ${areAllFractalsCompleted ? 'line-through text-muted-foreground' : ''}`}
               >
-                Daily Fractals
+                <div className="flex items-center gap-2">
+                  <Gem className="h-5 w-5" />
+                  Daily Fractals
+                </div>
               </CardTitle>
             </TooltipTrigger>
             <TooltipContent>

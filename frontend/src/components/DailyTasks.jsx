@@ -109,7 +109,10 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
 };
 
 import PactSupplyCard from './PactSupplyCard';
-import FractalsCard from './FractalsCard'; // Import the new placeholder card
+import FractalsCard from './FractalsCard';
+import ChallengeModeCard from './ChallengeModeCard';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown, Package, Gem, Swords } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -120,15 +123,19 @@ const DailyTasks = ({ currentTime }) => {
   const handleTaskToggle = useStore((state) => state.handleTaskToggle);
   const taskCompletion = useStore((state) => state.userData.taskCompletion);
   const {
-    showPactSupplyCard,
-    togglePactSupplyCard,
-    showFractalsCard,
-    toggleFractalsCard
+    showOfficialDailies, toggleOfficialDailies,
+    showPactSupply, togglePactSupply,
+    showFractals, toggleFractals,
+    showChallengeModes, toggleChallengeModes
   } = useStore((state) => ({
-    showPactSupplyCard: state.showPactSupplyCard,
-    togglePactSupplyCard: state.togglePactSupplyCard,
-    showFractalsCard: state.showFractalsCard,
-    toggleFractalsCard: state.toggleFractalsCard,
+    showOfficialDailies: state.showOfficialDailies,
+    toggleOfficialDailies: state.toggleOfficialDailies,
+    showPactSupply: state.showPactSupply,
+    togglePactSupply: state.togglePactSupply,
+    showFractals: state.showFractals,
+    toggleFractals: state.toggleFractals,
+    showChallengeModes: state.showChallengeModes,
+    toggleChallengeModes: state.toggleChallengeModes,
   }));
 
   const copyToClipboard = useCallback((text) => {
@@ -138,32 +145,48 @@ const DailyTasks = ({ currentTime }) => {
 
   return (
     <div>
-      <div className="flex justify-end items-center gap-6 mb-4">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="fractals-toggle"
-            checked={showFractalsCard}
-            onCheckedChange={toggleFractalsCard}
-          />
-          <Label htmlFor="fractals-toggle" className="text-sm">Fractals</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="pact-supply-toggle"
-            checked={showPactSupplyCard}
-            onCheckedChange={togglePactSupplyCard}
-          />
-          <Label htmlFor="pact-supply-toggle" className="text-sm">Pact Supply</Label>
-        </div>
+      <div className="flex justify-end items-center mb-4">
         <Button onClick={() => setIsEditMode(!isEditMode)} variant="outline">
           {isEditMode ? 'Done Editing' : 'Edit Dailies'}
         </Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* Conditionally render the special cards first */}
-        {showPactSupplyCard && <PactSupplyCard currentTime={currentTime} />}
-        {showFractalsCard && <FractalsCard />}
 
+      <Collapsible open={showOfficialDailies} onOpenChange={toggleOfficialDailies} className="mb-6 border-b pb-4">
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start px-2 text-lg font-semibold">
+            <ChevronDown className={`h-5 w-5 mr-2 transition-transform ${showOfficialDailies ? 'rotate-180' : ''}`} />
+            Official Dailies
+            <span className="flex items-center gap-2 ml-2 text-muted-foreground">
+              <Package className="h-4 w-4" />
+              <Gem className="h-4 w-4" />
+              <Swords className="h-4 w-4" />
+            </span>
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="flex items-center justify-end space-x-4 pt-4">
+            <div className="flex items-center space-x-2">
+              <Switch id="pact-supply-toggle" checked={showPactSupply} onCheckedChange={togglePactSupply} />
+              <Label htmlFor="pact-supply-toggle">Pact Supply</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch id="fractals-toggle" checked={showFractals} onCheckedChange={toggleFractals} />
+              <Label htmlFor="fractals-toggle">Fractals</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <Switch id="cm-toggle" checked={showChallengeModes} onCheckedChange={toggleChallengeModes} />
+              <Label htmlFor="cm-toggle">CMs</Label>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-4">
+            {showPactSupply && <PactSupplyCard currentTime={currentTime} />}
+            {showFractals && <FractalsCard />}
+            {showChallengeModes && <ChallengeModeCard />}
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Render all the user's custom task cards */}
         {customTasks.map(card => (
           <CustomTaskCard
