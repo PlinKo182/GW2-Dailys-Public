@@ -139,7 +139,7 @@ const FractalsCard = () => {
 
   return (
     <Card>
-      <CardHeader>
+      <CardHeader className="flex-row items-center justify-between">
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger>
