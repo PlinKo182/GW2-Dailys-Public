@@ -94,12 +94,11 @@ const FractalsCard = () => {
           </h4>
           <ul className="space-y-2 text-sm">
             {fractalTasks.recommended.map(({ id, name, scale }) => (
-              <li key={id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Checkbox id={id} checked={taskCompletion[id]} onCheckedChange={() => handleTaskToggle(id)} />
-                  <label htmlFor={id} className="text-muted-foreground cursor-pointer">{name}</label>
-                </div>
-                <Badge variant="secondary">{scale}</Badge>
+              <li key={id} className="flex items-center gap-2">
+                <Checkbox id={id} checked={taskCompletion[id]} onCheckedChange={() => handleTaskToggle(id)} />
+                <label htmlFor={id} className="text-muted-foreground cursor-pointer">
+                  {`${scale} - ${name}`}
+                </label>
               </li>
             ))}
           </ul>
