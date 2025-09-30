@@ -5,9 +5,10 @@ import TaskEditModal from './Tasks/TaskEditModal';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
 
 const ProgressBar = React.memo(({ progress }) => (
-  <div className="px-6 pb-4">
+  <div className="w-full">
     <div className="flex justify-between items-center mb-1 text-sm font-medium">
       <span className="text-muted-foreground">Progress</span>
       <span className="text-primary">{progress.completed}/{progress.total}</span>
@@ -60,13 +61,13 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
   };
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300">
-      <div className="p-6 flex-grow">
-        <div className="flex items-center justify-between mb-4">
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between w-full">
           {isEditMode && isEditingTitle ? (
             <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
           ) : (
-            <h3 className="text-xl font-bold text-primary">{card.title}</h3>
+            <CardTitle>{card.title}</CardTitle>
           )}
           {isEditMode && (
             <div className="flex items-center space-x-1">
@@ -75,6 +76,8 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
             </div>
           )}
         </div>
+      </CardHeader>
+      <CardContent>
         <div className="space-y-4">
           {card.tasks.map(task => (
             <CustomTaskItem
@@ -93,10 +96,12 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
         {isEditMode && (
           <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => handleOpenModal()}><PlusCircleIcon className="h-4 w-4 mr-2" />Add Task</Button>
         )}
-      </div>
-      <ProgressBar progress={cardProgress()} />
+      </CardContent>
+      <CardFooter>
+        <ProgressBar progress={cardProgress()} />
+      </CardFooter>
       <TaskEditModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} onSave={handleSaveTask} task={editingTask} />
-    </div>
+    </Card>
   );
 };
 
