@@ -77,7 +77,9 @@ const Dashboard = () => {
     let allTasks = customTasks.flatMap(card => card.tasks);
 
     if (showPactSupplyCard) {
-      allTasks.push({ id: 'pact_supply_run' });
+      const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
+      const pactSupplyTasks = PACT_AGENTS.map(agent => ({ id: `pact_supply_${agent.toLowerCase()}` }));
+      allTasks = [...allTasks, ...pactSupplyTasks];
     }
 
     // Include fractal tasks in progress if the card is visible

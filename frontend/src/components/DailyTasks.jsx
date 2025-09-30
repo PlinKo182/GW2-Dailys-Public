@@ -5,21 +5,13 @@ import TaskEditModal from './Tasks/TaskEditModal';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-
-const ProgressBar = React.memo(({ progress }) => (
-  <div className="px-6 pb-4">
-    <div className="flex justify-between items-center mb-1 text-sm font-medium">
-      <span className="text-muted-foreground">Progress</span>
-      <span className="text-primary">{progress.completed}/{progress.total}</span>
-    </div>
-    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-      <div 
-        className="h-2 rounded-full bg-primary transition-all duration-500 ease-out"
-        style={{ width: `${progress.percentage}%` }}
-      />
-    </div>
-  </div>
-));
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, currentTime, isEditMode }) => {
   const { addTask, updateTask, deleteTask, updateCardTitle, deleteCard } = useStore();
@@ -28,16 +20,19 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
 
-  const cardProgress = useCallback(() => {
-    const totalTasks = card.tasks.length;
-    if (totalTasks === 0) return { completed: 0, total: 0, percentage: 0 };
-    const completedTasks = card.tasks.filter(task => taskCompletion[task.id]).length;
-    return {
-      completed: completedTasks,
-      total: totalTasks,
-      percentage: Math.round((completedTasks / totalTasks) * 100),
-    };
-  }, [card.tasks, taskCompletion]);
+  const taskIds = card.tasks.map(t => t.id);
+  const completedTasks = taskIds.filter(id => taskCompletion[id]);
+  const areAllTasksCompleted = taskIds.length > 0 && completedTasks.length === taskIds.length;
+
+  const handleToggleAllTasks = () => {
+    if (isEditMode) return;
+    const newCompletionState = !areAllTasksCompleted;
+    taskIds.forEach(id => {
+      if (!!taskCompletion[id] !== newCompletionState) {
+        onTaskToggle(id, newCompletionState);
+      }
+    });
+  };
 
   const handleTitleChange = (e) => setTitle(e.target.value);
   const handleTitleBlur = () => {
@@ -60,21 +55,35 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
   };
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300">
-      <div className="p-6 flex-grow">
-        <div className="flex items-center justify-between mb-4">
-          {isEditMode && isEditingTitle ? (
-            <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
-          ) : (
-            <h3 className="text-xl font-bold text-primary">{card.title}</h3>
-          )}
-          {isEditMode && (
-            <div className="flex items-center space-x-1">
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCard(card.id)} title="Delete card"><TrashIcon className="h-4 w-4" /></Button>
-            </div>
-          )}
-        </div>
+    <Card>
+      <CardHeader className="flex-row items-center justify-between">
+        {isEditMode && isEditingTitle ? (
+          <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
+        ) : (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <CardTitle
+                  onClick={handleToggleAllTasks}
+                  className={`${!isEditMode ? 'cursor-pointer hover:underline' : ''} ${areAllTasksCompleted ? 'line-through text-muted-foreground' : ''}`}
+                >
+                  {card.title}
+                </CardTitle>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to toggle all tasks</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {isEditMode && (
+          <div className="flex items-center space-x-1">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCard(card.id)} title="Delete card"><TrashIcon className="h-4 w-4" /></Button>
+          </div>
+        )}
+      </CardHeader>
+      <CardContent>
         <div className="space-y-4">
           {card.tasks.map(task => (
             <CustomTaskItem
@@ -93,10 +102,9 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
         {isEditMode && (
           <Button variant="outline" size="sm" className="mt-4 w-full" onClick={() => handleOpenModal()}><PlusCircleIcon className="h-4 w-4 mr-2" />Add Task</Button>
         )}
-      </div>
-      <ProgressBar progress={cardProgress()} />
+      </CardContent>
       <TaskEditModal isOpen={isModalOpen} onOpenChange={setIsModalOpen} onSave={handleSaveTask} task={editingTask} />
-    </div>
+    </Card>
   );
 };
 

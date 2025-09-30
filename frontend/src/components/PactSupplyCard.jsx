@@ -3,6 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Copy } from 'lucide-react';
 import useStore from '../store/useStore';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
 const VENDORS = {
@@ -30,7 +37,11 @@ const getPsnaChatlinks = (now) => {
   return links;
 };
 
-const PACT_SUPPLY_TASK_ID = 'pact_supply_run';
+const PACT_AGENT_TASKS = PACT_AGENTS.map(agent => ({
+  name: agent,
+  id: `pact_supply_${agent.toLowerCase()}`
+}));
+const PACT_AGENT_TASK_IDS = PACT_AGENT_TASKS.map(task => task.id);
 
 const PactSupplyCard = ({ currentTime }) => {
   const [dailyLinks, setDailyLinks] = useState({});
@@ -57,51 +68,78 @@ const PactSupplyCard = ({ currentTime }) => {
     copyToClipboard(allLinks, true);
   };
 
-  const isCompleted = taskCompletion[PACT_SUPPLY_TASK_ID] || false;
+  const completedNpcTasks = PACT_AGENT_TASK_IDS.filter(id => taskCompletion[id]);
+  const isAllCompleted = completedNpcTasks.length === PACT_AGENT_TASK_IDS.length;
+  const isSomeCompleted = completedNpcTasks.length > 0 && !isAllCompleted;
+
+  const handleToggleAll = () => {
+    const newCompletionState = !isAllCompleted;
+    PACT_AGENT_TASK_IDS.forEach(id => {
+      if (!!taskCompletion[id] !== newCompletionState) {
+        handleTaskToggle(id, newCompletionState);
+      }
+    });
+  };
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300">
-      <div className="p-6 flex-grow">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id={PACT_SUPPLY_TASK_ID}
-              checked={isCompleted}
-              onCheckedChange={() => handleTaskToggle(PACT_SUPPLY_TASK_ID)}
-            />
-            <label
-              htmlFor={PACT_SUPPLY_TASK_ID}
-              className={`text-xl font-bold text-primary cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
-            >
-              Pact Supply Network Agent
-            </label>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleCopyAll}
-            title="Click to copy all chatlinks"
-            className="h-8 w-8"
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-        <div className="space-y-2 pl-8">
-          {Object.entries(dailyLinks).map(([npc, chatlink]) => (
-            <div key={npc} className="flex items-center justify-between text-sm">
-              <span className="font-medium text-muted-foreground">{npc}</span>
-              <span
-                className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
-                onClick={() => copyToClipboard(`${npc} - ${chatlink}`)}
-                title="Click to copy chatlink"
+    <Card>
+      <CardHeader className="flex-row items-center justify-between">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <CardTitle
+                onClick={handleToggleAll}
+                className={`cursor-pointer hover:underline ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
               >
-                {chatlink}
-              </span>
-            </div>
-          ))}
+                Pact Supply Network Agent
+              </CardTitle>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Click to toggle all tasks</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3 pl-2">
+          {PACT_AGENT_TASKS.map(task => {
+            const chatlink = dailyLinks[task.name];
+            const isCompleted = !!taskCompletion[task.id];
+            return (
+              <div key={task.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={task.id}
+                  checked={isCompleted}
+                  onCheckedChange={() => handleTaskToggle(task.id)}
+                />
+                <div className="flex-1">
+                  <label
+                    htmlFor={task.id}
+                    className={`text-foreground cursor-pointer transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                  >
+                    {task.name}
+                  </label>
+                </div>
+                {chatlink && (
+                  <button
+                    onClick={() => copyToClipboard(`${task.name} - ${chatlink}`)}
+                    aria-label={`Copy waypoint for ${task.name}`}
+                    className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150"
+                    title="Click to copy chatlink"
+                  >
+                    {chatlink}
+                  </button>
+                )}
+              </div>
+            );
+          })}
         </div>
-      </div>
-    </div>
+        <Button variant="outline" size="sm" className="mt-4 w-full" onClick={handleCopyAll}>
+            <Copy className="h-4 w-4 mr-2" />
+            Copy All Chatlinks
+        </Button>
+      </CardContent>
+    </Card>
   );
 };
 

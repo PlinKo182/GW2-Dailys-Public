@@ -32,7 +32,7 @@ function LoginPage() {
       console.log('Verificando nome no backend...');
       const data = await fetchProgress(userName.trim());
       console.log('Resposta do backend:', data);
-      
+
       if (data && Object.keys(data).length > 0) {
         console.log('Nome já existe');
         setError('Nome já existe, escolha outro.');
