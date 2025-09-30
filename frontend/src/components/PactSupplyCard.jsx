@@ -4,6 +4,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Copy } from 'lucide-react';
 import useStore from '../store/useStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
 const VENDORS = {
@@ -78,12 +84,21 @@ const PactSupplyCard = ({ currentTime }) => {
   return (
     <Card>
       <CardHeader>
-        <CardTitle
-          onClick={handleToggleAll}
-          className={`cursor-pointer hover:underline ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
-        >
-          Pact Supply Network Agent
-        </CardTitle>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger>
+              <CardTitle
+                onClick={handleToggleAll}
+                className={`cursor-pointer hover:underline ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
+              >
+                Pact Supply Network Agent
+              </CardTitle>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Click to toggle all tasks</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </CardHeader>
       <CardContent>
         <div className="space-y-3 pl-2">

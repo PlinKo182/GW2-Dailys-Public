@@ -5,7 +5,13 @@ import TaskEditModal from './Tasks/TaskEditModal';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, currentTime, isEditMode }) => {
   const { addTask, updateTask, deleteTask, updateCardTitle, deleteCard } = useStore();
@@ -54,12 +60,21 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
         {isEditMode && isEditingTitle ? (
           <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
         ) : (
-          <CardTitle
-            onClick={handleToggleAllTasks}
-            className={`${!isEditMode ? 'cursor-pointer hover:underline' : ''} ${areAllTasksCompleted ? 'line-through text-muted-foreground' : ''}`}
-          >
-            {card.title}
-          </CardTitle>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger>
+                <CardTitle
+                  onClick={handleToggleAllTasks}
+                  className={`${!isEditMode ? 'cursor-pointer hover:underline' : ''} ${areAllTasksCompleted ? 'line-through text-muted-foreground' : ''}`}
+                >
+                  {card.title}
+                </CardTitle>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Click to toggle all tasks</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
         {isEditMode && (
           <div className="flex items-center space-x-1">
