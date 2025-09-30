@@ -66,7 +66,8 @@ const Dashboard = () => {
     };
   }, [checkAndResetDailyProgress]);
 
-  const { showFractalsCard, fractalTasks } = useStore(state => ({
+  const { showPactSupplyCard, showFractalsCard, fractalTasks } = useStore(state => ({
+    showPactSupplyCard: state.showPactSupplyCard,
     showFractalsCard: state.showFractalsCard,
     fractalTasks: state.fractalTasks,
   }));
@@ -74,6 +75,10 @@ const Dashboard = () => {
   // New progress calculation logic for custom tasks
   const calculateOverallProgress = useCallback(() => {
     let allTasks = customTasks.flatMap(card => card.tasks);
+
+    if (showPactSupplyCard) {
+      allTasks.push({ id: 'pact_supply_run' });
+    }
 
     // Include fractal tasks in progress if the card is visible
     if (showFractalsCard) {
@@ -86,7 +91,7 @@ const Dashboard = () => {
 
     const completedTasks = allTasks.filter(task => taskCompletion[task.id]).length;
     return Math.round((completedTasks / totalTasks) * 100);
-  }, [customTasks, taskCompletion, showFractalsCard, fractalTasks]);
+  }, [customTasks, taskCompletion, showPactSupplyCard, showFractalsCard, fractalTasks]);
 
   // Removido botão de salvar manual - agora é automático via useStore
 

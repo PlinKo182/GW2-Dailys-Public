@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
-import { ClipboardDocumentIcon } from '@heroicons/react/24/outline';
+import { Checkbox } from "@/components/ui/checkbox";
+import { Copy } from 'lucide-react';
 import useStore from '../store/useStore';
 
-// Data from the user request, converted to JS
 const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
-
 const VENDORS = {
   "Mehem":   {0: "[&BIcHAAA=]", 1: "[&BH8HAAA=]", 2: "[&BH4HAAA=]", 3: "[&BKsHAAA=]", 4: "[&BJQHAAA=]", 5: "[&BH8HAAA=]", 6: "[&BIkHAAA=]"},
   "Fox":     {0: "[&BEwDAAA=]", 1: "[&BEgAAAA=]", 2: "[&BMIBAAA=]", 3: "[&BE8AAAA=]", 4: "[&BMMCAAA=]", 5: "[&BLkCAAA=]", 6: "[&BDoBAAA=]"},
@@ -15,27 +14,15 @@ const VENDORS = {
   "Verma":   {0: "[&BA8CAAA=]", 1: "[&BIMBAAA=]", 2: "[&BPEBAAA=]", 3: "[&BOcBAAA=]", 4: "[&BNMAAAA=]", 5: "[&BBABAAA=]", 6: "[&BCECAAA=]"}
 };
 
-/**
- * Determines the correct daily chatlinks for the Pact Supply Network Agents.
- * @param {Date} now - The current date and time.
- * @returns {Object} - An object mapping NPC names to their chatlinks for the current day.
- */
 const getPsnaChatlinks = (now) => {
-  // GW2 daily reset is at 08:00 UTC.
   const resetTime = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 8, 0, 0, 0));
-
   let targetDate = now;
-  // If the current time is before today's reset, we need to use yesterday's data.
   if (now < resetTime) {
     const yesterday = new Date(now);
     yesterday.setUTCDate(now.getUTCDate() - 1);
     targetDate = yesterday;
   }
-
-  const jsDay = targetDate.getUTCDay(); // In JS, Sunday is 0, Monday is 1, etc.
-  // The vendor data is indexed with Monday as 0. We convert the JS day to match.
-  const vendorDayIndex = (jsDay + 6) % 7; // Converts to Monday = 0, ..., Sunday = 6
-
+  const vendorDayIndex = (targetDate.getUTCDay() + 6) % 7;
   const links = {};
   for (const npc of PACT_AGENTS) {
     links[npc] = VENDORS[npc][vendorDayIndex];
@@ -43,9 +30,15 @@ const getPsnaChatlinks = (now) => {
   return links;
 };
 
+const PACT_SUPPLY_TASK_ID = 'pact_supply_run';
+
 const PactSupplyCard = ({ currentTime }) => {
   const [dailyLinks, setDailyLinks] = useState({});
-  const setNotification = useStore(state => state.setNotification);
+  const { setNotification, handleTaskToggle, taskCompletion } = useStore(state => ({
+    setNotification: state.setNotification,
+    handleTaskToggle: state.handleTaskToggle,
+    taskCompletion: state.userData.taskCompletion,
+  }));
 
   useEffect(() => {
     setDailyLinks(getPsnaChatlinks(currentTime));
@@ -54,34 +47,49 @@ const PactSupplyCard = ({ currentTime }) => {
   const copyToClipboard = useCallback((text, isAll = false) => {
     if (!text) return;
     navigator.clipboard.writeText(text.trim());
-    const message = isAll
-      ? 'Copied all Pact Supply chatlinks!'
-      : `Copied chatlink for ${text.split(' - ')[0]}!`;
+    const message = isAll ? 'Copied all Pact Supply chatlinks!' : `Copied chatlink for ${text.split(' - ')[0]}!`;
     setNotification({ type: 'success', message });
     setTimeout(() => setNotification(null), 2000);
   }, [setNotification]);
 
   const handleCopyAll = () => {
-    const allLinks = Object.entries(dailyLinks)
-      .map(([npc, chatlink]) => `${npc} - ${chatlink}`)
-      .join(' ');
+    const allLinks = Object.entries(dailyLinks).map(([npc, chatlink]) => `${npc} - ${chatlink}`).join(' ');
     copyToClipboard(allLinks, true);
   };
+
+  const isCompleted = taskCompletion[PACT_SUPPLY_TASK_ID] || false;
 
   return (
     <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300">
       <div className="p-6 flex-grow">
-        <h3
-          className="text-xl font-bold text-primary mb-4 cursor-pointer hover:underline"
-          onClick={handleCopyAll}
-          title="Click to copy all chatlinks"
-        >
-          Pact Supply Network Agent
-        </h3>
-        <div className="space-y-3">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id={PACT_SUPPLY_TASK_ID}
+              checked={isCompleted}
+              onCheckedChange={() => handleTaskToggle(PACT_SUPPLY_TASK_ID)}
+            />
+            <label
+              htmlFor={PACT_SUPPLY_TASK_ID}
+              className={`text-xl font-bold text-primary cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+            >
+              Pact Supply Network Agent
+            </label>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCopyAll}
+            title="Click to copy all chatlinks"
+            className="h-8 w-8"
+          >
+            <Copy className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="space-y-2 pl-8">
           {Object.entries(dailyLinks).map(([npc, chatlink]) => (
-            <div key={npc} className="flex items-center justify-between">
-              <span className="font-medium">{npc}</span>
+            <div key={npc} className="flex items-center justify-between text-sm">
+              <span className="font-medium text-muted-foreground">{npc}</span>
               <span
                 className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
                 onClick={() => copyToClipboard(`${npc} - ${chatlink}`)}
