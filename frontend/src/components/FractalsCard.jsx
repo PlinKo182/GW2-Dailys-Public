@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Award, List } from 'lucide-react';
+import { Award, List, Gem } from 'lucide-react';
 import useStore from '../store/useStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
@@ -150,7 +150,10 @@ const FractalsCard = () => {
                 onClick={handleToggleAllFractals}
                 className={`cursor-pointer hover:underline ${areAllFractalsCompleted ? 'line-through text-muted-foreground' : ''}`}
               >
-                Daily Fractals
+                <div className="flex items-center gap-2">
+                  <Gem className="h-5 w-5" />
+                  Daily Fractals
+                </div>
               </CardTitle>
             </TooltipTrigger>
             <TooltipContent>

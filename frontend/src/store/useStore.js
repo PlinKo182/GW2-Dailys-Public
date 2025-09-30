@@ -47,14 +47,17 @@ const useStore = create((set, get) => ({
   notification: null,
   lastResetDate: 0,
   showOfficialDailies: false,
+  showPactSupply: true,
+  showFractals: true,
+  showChallengeModes: true,
   fractalTasks: { recommended: [], dailies: [], cms: [] },
 
   // --- ACTIONS ---
 
   _saveState: () => {
-    const { currentUser, lastResetDate, showOfficialDailies } = get();
+    const { currentUser, lastResetDate, showOfficialDailies, showPactSupply, showFractals, showChallengeModes } = get();
     // Save app-level data like session and UI preferences
-    localStorageAPI.saveAppData({ currentUser, lastResetDate, showOfficialDailies });
+    localStorageAPI.saveAppData({ currentUser, lastResetDate, showOfficialDailies, showPactSupply, showFractals, showChallengeModes });
   },
 
   loadInitialData: () => {
@@ -62,7 +65,10 @@ const useStore = create((set, get) => ({
     if (appData) {
         // Set UI preferences immediately
         set({
-          showOfficialDailies: appData.showOfficialDailies === true // Default to false
+          showOfficialDailies: appData.showOfficialDailies === true,
+          showPactSupply: appData.showPactSupply !== false,
+          showFractals: appData.showFractals !== false,
+          showChallengeModes: appData.showChallengeModes !== false,
         });
 
         // If a user session exists, log them in
@@ -77,6 +83,19 @@ const useStore = create((set, get) => ({
   toggleOfficialDailies: () => {
     set(state => ({ showOfficialDailies: !state.showOfficialDailies }));
     get()._saveState(); // Persist the change
+  },
+
+  togglePactSupply: () => {
+    set(state => ({ showPactSupply: !state.showPactSupply }));
+    get()._saveState();
+  },
+  toggleFractals: () => {
+    set(state => ({ showFractals: !state.showFractals }));
+    get()._saveState();
+  },
+  toggleChallengeModes: () => {
+    set(state => ({ showChallengeModes: !state.showChallengeModes }));
+    get()._saveState();
   },
 
   // Action to update the fractal tasks in the store
