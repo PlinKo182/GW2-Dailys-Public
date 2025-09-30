@@ -136,7 +136,7 @@ const FractalsCard = () => {
       <CardHeader>
         <CardTitle
           onClick={handleToggleAllFractals}
-          className={`cursor-pointer ${areAllFractalsCompleted ? 'line-through text-muted-foreground' : ''}`}
+          className={`cursor-pointer hover:underline ${areAllFractalsCompleted ? 'line-through text-muted-foreground' : ''}`}
         >
           Daily Fractals
         </CardTitle>

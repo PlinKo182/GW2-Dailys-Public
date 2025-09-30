@@ -80,7 +80,7 @@ const PactSupplyCard = ({ currentTime }) => {
       <CardHeader>
         <CardTitle
           onClick={handleToggleAll}
-          className={`cursor-pointer ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
+          className={`cursor-pointer hover:underline ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
         >
           Pact Supply Network Agent
         </CardTitle>

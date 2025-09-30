@@ -56,7 +56,7 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
         ) : (
           <CardTitle
             onClick={handleToggleAllTasks}
-            className={`${!isEditMode ? 'cursor-pointer' : ''} ${areAllTasksCompleted ? 'line-through text-muted-foreground' : ''}`}
+            className={`${!isEditMode ? 'cursor-pointer hover:underline' : ''} ${areAllTasksCompleted ? 'line-through text-muted-foreground' : ''}`}
           >
             {card.title}
           </CardTitle>
