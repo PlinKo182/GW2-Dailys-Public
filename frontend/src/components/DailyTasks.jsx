@@ -15,7 +15,7 @@ const ProgressBar = React.memo(({ progress }) => (
     </div>
     <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
       <div 
-        className="h-2 rounded-full bg-primary transition-all duration-500 ease-out"
+        className="h-2 rounded-full bg-gradient-to-r from-chart-1 to-chart-2 transition-all duration-500 ease-out"
         style={{ width: `${progress.percentage}%` }}
       />
     </div>

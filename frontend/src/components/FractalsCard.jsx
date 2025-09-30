@@ -79,7 +79,7 @@ const FractalsCard = () => {
     return (
       <div className="space-y-4">
         <div>
-          <h4 className="flex items-center gap-2 text-md font-semibold text-foreground mb-2">
+          <h4 className="flex items-center gap-2 text-md font-semibold text-primary mb-2">
             <Award className="h-4 w-4" />
             Recommended
           </h4>
@@ -97,7 +97,7 @@ const FractalsCard = () => {
         </div>
         <Separator />
         <div>
-          <h4 className="flex items-center gap-2 text-md font-semibold text-foreground mb-2">
+          <h4 className="flex items-center gap-2 text-md font-semibold text-primary mb-2">
             <List className="h-4 w-4" />
             Daily Tiers
           </h4>

@@ -90,9 +90,9 @@ const PactSupplyCard = ({ currentTime }) => {
         <div className="space-y-2 pl-8">
           {Object.entries(dailyLinks).map(([npc, chatlink]) => (
             <div key={npc} className="flex items-center justify-between text-sm">
-              <span className="font-medium text-muted-foreground">{npc}</span>
+              <span className="font-medium text-foreground">{npc}</span>
               <span
-                className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
+                className="text-muted-foreground text-xs font-mono hover:bg-accent px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
                 onClick={() => copyToClipboard(`${npc} - ${chatlink}`)}
                 title="Click to copy chatlink"
               >
