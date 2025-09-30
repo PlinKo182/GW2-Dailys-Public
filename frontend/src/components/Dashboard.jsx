@@ -80,10 +80,19 @@ const Dashboard = () => {
       const pactSupplyTasks = PACT_AGENTS.map(agent => ({ id: `pact_supply_${agent.toLowerCase()}` }));
       allTasks = [...allTasks, ...pactSupplyTasks];
 
+      const FRACTAL_CMS = [
+        { name: "Nightmare", id: "fractal_cm_nightmare" },
+        { name: "Shattered Observatory", id: "fractal_cm_shattered_observatory" },
+        { name: "Sunqua Peak", id: "fractal_cm_sunqua_peak" },
+        { name: "Silent Surf", id: "fractal_cm_silent_surf" },
+        { name: "Lonely Tower", id: "fractal_cm_lonely_tower" },
+        { name: "Kinfall", id: "fractal_cm_kinfall" },
+      ];
+      allTasks = [...allTasks, ...FRACTAL_CMS];
+
       const allFractalTasks = [
         ...(fractalTasks.recommended || []),
-        ...(fractalTasks.dailies || []),
-        ...(fractalTasks.cms || [])
+        ...(fractalTasks.dailies || [])
       ];
       allTasks = [...allTasks, ...allFractalTasks];
     }

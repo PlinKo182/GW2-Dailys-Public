@@ -110,8 +110,9 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
 
 import PactSupplyCard from './PactSupplyCard';
 import FractalsCard from './FractalsCard';
+import ChallengeModeCard from './ChallengeModeCard';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown } from 'lucide-react';
+import { ChevronDown, Package, Gem, Swords } from 'lucide-react';
 
 const DailyTasks = ({ currentTime }) => {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -142,12 +143,18 @@ const DailyTasks = ({ currentTime }) => {
           <Button variant="ghost" className="w-full justify-start px-2 text-lg font-semibold">
             <ChevronDown className={`h-5 w-5 mr-2 transition-transform ${showOfficialDailies ? 'rotate-180' : ''}`} />
             Official Dailies
+            <span className="flex items-center gap-2 ml-2 text-muted-foreground">
+              <Package className="h-4 w-4" />
+              <Gem className="h-4 w-4" />
+              <Swords className="h-4 w-4" />
+            </span>
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-4">
             <PactSupplyCard currentTime={currentTime} />
             <FractalsCard />
+            <ChallengeModeCard />
           </div>
         </CollapsibleContent>
       </Collapsible>
