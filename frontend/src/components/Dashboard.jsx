@@ -106,11 +106,6 @@ const Dashboard = () => {
       )}
 
       <main className="max-w-7xl mx-auto py-8 px-6">
-        <div className="mb-10">
-          <h2 className="text-3xl font-bold mb-2">Daily Dashboard</h2>
-          <p className="text-muted-foreground">Track your daily progress in Guild Wars 2</p>
-        </div>
-
         <DailyProgress overallProgress={calculateOverallProgress()} />
 
         <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="mt-8">
