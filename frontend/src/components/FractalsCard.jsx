@@ -3,7 +3,7 @@ import axios from 'axios';
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Award, List } from 'lucide-react';
+import { Award, List, Swords } from 'lucide-react';
 import useStore from '../store/useStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
@@ -27,52 +27,59 @@ const FractalsCard = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchFractals = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const categoryResponse = await axios.get("https://api.guildwars2.com/v2/achievements/categories/88");
-        const achievementIds = categoryResponse.data.achievements;
+    const fetchWizardsVaultFractals = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            const vaultResponse = await axios.get("https://api.guildwars2.com/v2/wizardsvault");
+            const objectiveIds = vaultResponse.data.objectives;
 
-        const achievementsResponse = await axios.get(`https://api.guildwars2.com/v2/achievements?ids=${achievementIds.join(',')}`);
-        const achievements = achievementsResponse.data;
+            const objectivesResponse = await axios.get(`https://api.guildwars2.com/v2/wizardsvault/objectives?ids=${objectiveIds.join(',')}`);
+            const objectives = objectivesResponse.data;
 
-        const recommendedFractals = new Map();
-        const dailyFractals = new Set();
+            const recommendedFractals = [];
+            const dailyFractals = [];
+            const challengeModeFractals = [];
 
-        achievements.forEach(ach => {
-          if (ach.name.includes("Recommended")) {
-            try {
-              const scale = parseInt(ach.name.split("Scale ")[1], 10);
-              const fractalName = scaleToFractal[scale] || `Scale ${scale}`;
-              recommendedFractals.set(scale, fractalName);
-            } catch (e) { /* Ignore parsing fails */ }
-          } else if (["Tier 1", "Tier 2", "Tier 3", "Tier 4"].some(tier => ach.name.includes(tier))) {
-            let fractalName = ach.name;
-            ["Daily Tier 1 ", "Daily Tier 2 ", "Daily Tier 3 ", "Daily Tier 4 ", "Fractal"].forEach(term => {
-              fractalName = fractalName.replace(term, "");
+            const pveObjectives = objectives.filter(obj => obj.track === "PvE" && obj.title.toLowerCase().includes("fractal"));
+
+            pveObjectives.forEach(obj => {
+                const title = obj.title;
+                const taskId = `fractal_wv_${obj.id}`;
+
+                if (title.includes("Recommended")) {
+                    try {
+                        const scale = parseInt(title.split("Scale ")[1], 10);
+                        const fractalName = scaleToFractal[scale] || `Scale ${scale}`;
+                        recommendedFractals.push({ id: taskId, name: fractalName, scale });
+                    } catch (e) { /* Ignore parsing fails */ }
+                } else if (title.startsWith("Daily Tier")) {
+                    const fractalName = title.substring(title.indexOf(":") + 2);
+                    dailyFractals.push({ id: taskId, name: fractalName });
+                } else if (title.endsWith("Challenge Mode")) {
+                    const fractalName = title.replace(" Fractal Challenge Mode", "");
+                    challengeModeFractals.push({ id: taskId, name: fractalName });
+                }
             });
-            dailyFractals.add(fractalName.trim());
-          }
-        });
 
-        // Generate stable IDs and update the global store
-        const sortedRecommended = Array.from(recommendedFractals.entries())
-          .sort(([scaleA], [scaleB]) => scaleA - scaleB)
-          .map(([scale, name]) => ({ id: `fractal_rec_${scale}`, name, scale }));
+            recommendedFractals.sort((a, b) => a.scale - b.scale);
+            dailyFractals.sort((a, b) => a.name.localeCompare(b.name));
+            challengeModeFractals.sort((a, b) => a.name.localeCompare(b.name));
 
-        const sortedDailies = Array.from(dailyFractals).sort()
-          .map(name => ({ id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}`, name }));
+            setFractalTasks({
+                recommended: recommendedFractals,
+                dailies: dailyFractals,
+                cms: challengeModeFractals
+            });
 
-        setFractalTasks({ recommended: sortedRecommended, dailies: sortedDailies });
-      } catch (err) {
-        setError("Failed to fetch daily fractals. The API might be down.");
-      } finally {
-        setLoading(false);
-      }
+        } catch (err) {
+            setError("Failed to fetch daily fractals from the Wizard's Vault. The API might be down.");
+        } finally {
+            setLoading(false);
+        }
     };
 
-    fetchFractals();
+    fetchWizardsVaultFractals();
   }, [setFractalTasks]);
 
   const renderContent = () => {
@@ -116,13 +123,33 @@ const FractalsCard = () => {
             ))}
           </ul>
         </div>
+        {fractalTasks.cms && fractalTasks.cms.length > 0 && (
+            <>
+                <Separator />
+                <div>
+                    <h4 className="flex items-center gap-2 text-md font-semibold text-foreground mb-2">
+                        <Swords className="h-4 w-4" />
+                        Challenge Modes
+                    </h4>
+                    <ul className="space-y-2 text-sm">
+                        {fractalTasks.cms.map(({ id, name }) => (
+                            <li key={id} className="flex items-center gap-2">
+                                <Checkbox id={id} checked={taskCompletion[id]} onCheckedChange={() => handleTaskToggle(id)} />
+                                <label htmlFor={id} className="text-muted-foreground cursor-pointer">{name}</label>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+            </>
+        )}
       </div>
     );
   };
 
   const allFractalTaskIds = [
-    ...fractalTasks.recommended.map(t => t.id),
-    ...fractalTasks.dailies.map(t => t.id)
+    ...(fractalTasks.recommended || []).map(t => t.id),
+    ...(fractalTasks.dailies || []).map(t => t.id),
+    ...(fractalTasks.cms || []).map(t => t.id)
   ];
 
   const completedFractalTasks = allFractalTaskIds.filter(id => taskCompletion[id]);

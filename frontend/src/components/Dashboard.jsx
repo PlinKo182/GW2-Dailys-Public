@@ -84,7 +84,11 @@ const Dashboard = () => {
 
     // Include fractal tasks in progress if the card is visible
     if (showFractalsCard) {
-      const allFractalTasks = [...fractalTasks.recommended, ...fractalTasks.dailies];
+      const allFractalTasks = [
+        ...(fractalTasks.recommended || []),
+        ...(fractalTasks.dailies || []),
+        ...(fractalTasks.cms || [])
+      ];
       allTasks = [...allTasks, ...allFractalTasks];
     }
 
