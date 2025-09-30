@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Copy } from 'lucide-react';
 import useStore from '../store/useStore';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
 const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
 const VENDORS = {
@@ -78,25 +78,18 @@ const PactSupplyCard = ({ currentTime }) => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-3">
-          <Checkbox
-            id="pact_supply_all"
-            checked={isSomeCompleted ? 'indeterminate' : isAllCompleted}
-            onCheckedChange={handleToggleAll}
-          />
-          <CardTitle className={isAllCompleted ? 'line-through text-muted-foreground' : ''}>
-            Pact Supply Network Agent
-          </CardTitle>
+        <div className="flex items-center justify-between w-full">
+          <div className="flex items-center gap-3">
+            <Checkbox
+              id="pact_supply_all"
+              checked={isSomeCompleted ? 'indeterminate' : isAllCompleted}
+              onCheckedChange={handleToggleAll}
+            />
+            <CardTitle className={isAllCompleted ? 'line-through text-muted-foreground' : ''}>
+              Pact Supply Network Agent
+            </CardTitle>
+          </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={handleCopyAll}
-          title="Click to copy all chatlinks"
-          className="h-8 w-8"
-        >
-          <Copy className="h-4 w-4" />
-        </Button>
       </CardHeader>
       <CardContent>
         <div className="space-y-3 pl-2">
@@ -132,6 +125,10 @@ const PactSupplyCard = ({ currentTime }) => {
             );
           })}
         </div>
+        <Button variant="outline" size="sm" className="mt-4 w-full" onClick={handleCopyAll}>
+            <Copy className="h-4 w-4 mr-2" />
+            Copy All Chatlinks
+        </Button>
       </CardContent>
     </Card>
   );

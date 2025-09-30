@@ -5,7 +5,7 @@ import TaskEditModal from './Tasks/TaskEditModal';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PlusCircleIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '@/components/ui/card';
 
 const ProgressBar = React.memo(({ progress }) => (
   <div className="w-full">
@@ -62,20 +62,18 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center justify-between w-full">
-          {isEditMode && isEditingTitle ? (
-            <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
-          ) : (
-            <CardTitle>{card.title}</CardTitle>
-          )}
-          {isEditMode && (
-            <div className="flex items-center space-x-1">
-              <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
-              <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCard(card.id)} title="Delete card"><TrashIcon className="h-4 w-4" /></Button>
-            </div>
-          )}
-        </div>
+      <CardHeader className="flex-row items-center justify-between">
+        {isEditMode && isEditingTitle ? (
+          <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
+        ) : (
+          <CardTitle>{card.title}</CardTitle>
+        )}
+        {isEditMode && (
+          <div className="flex items-center space-x-1">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCard(card.id)} title="Delete card"><TrashIcon className="h-4 w-4" /></Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
