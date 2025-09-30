@@ -61,8 +61,7 @@ const FractalsCard = () => {
     };
 
     fetchFractals();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [setFractalTasks]);
 
   const renderContent = () => {
     if (loading) {
