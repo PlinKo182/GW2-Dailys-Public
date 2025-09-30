@@ -48,6 +48,7 @@ const useStore = create((set, get) => ({
   lastResetDate: 0,
   showPactSupplyCard: true,
   showFractalsCard: true,
+  fractalTasks: { recommended: [], dailies: [] }, // New state for fractal tasks
 
   // --- ACTIONS ---
 
@@ -84,6 +85,11 @@ const useStore = create((set, get) => ({
   toggleFractalsCard: () => {
     set(state => ({ showFractalsCard: !state.showFractalsCard }));
     get()._saveState(); // Persist the change
+  },
+
+  // Action to update the fractal tasks in the store
+  setFractalTasks: (tasks) => {
+    set({ fractalTasks: tasks });
   },
 
   _scheduleSync: () => {
