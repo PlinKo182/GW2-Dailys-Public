@@ -131,28 +131,26 @@ const DailyTasks = ({ currentTime }) => {
 
   return (
     <div>
-      <div className="flex justify-between items-center mb-4">
-        <Collapsible open={showOfficialDailies} onOpenChange={toggleOfficialDailies}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost">
-              <ChevronDown className={`h-4 w-4 transition-transform ${showOfficialDailies ? 'rotate-180' : ''}`} />
-              <span className="ml-2">Official Dailies</span>
-            </Button>
-          </CollapsibleTrigger>
-        </Collapsible>
-
+      <div className="flex justify-end items-center mb-4">
         <Button onClick={() => setIsEditMode(!isEditMode)} variant="outline">
           {isEditMode ? 'Done Editing' : 'Edit Dailies'}
         </Button>
       </div>
 
-      <CollapsibleContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
-          <PactSupplyCard currentTime={currentTime} />
-          <FractalsCard />
-        </div>
-        <hr className="border-border my-6" />
-      </CollapsibleContent>
+      <Collapsible open={showOfficialDailies} onOpenChange={toggleOfficialDailies} className="mb-6 border-b pb-4">
+        <CollapsibleTrigger asChild>
+          <Button variant="ghost" className="w-full justify-start px-2 text-lg font-semibold">
+            <ChevronDown className={`h-5 w-5 mr-2 transition-transform ${showOfficialDailies ? 'rotate-180' : ''}`} />
+            Official Dailies
+          </Button>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-4">
+            <PactSupplyCard currentTime={currentTime} />
+            <FractalsCard />
+          </div>
+        </CollapsibleContent>
+      </Collapsible>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Render all the user's custom task cards */}
