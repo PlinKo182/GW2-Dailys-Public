@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Copy } from 'lucide-react';
 import useStore from '../store/useStore';
+import { Card, CardHeader, CardContent } from '@/components/ui/Card';
 
 const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
 const VENDORS = {
@@ -60,32 +61,32 @@ const PactSupplyCard = ({ currentTime }) => {
   const isCompleted = taskCompletion[PACT_SUPPLY_TASK_ID] || false;
 
   return (
-    <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col hover:shadow-xl transition-all duration-300">
-      <div className="p-6 flex-grow">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id={PACT_SUPPLY_TASK_ID}
-              checked={isCompleted}
-              onCheckedChange={() => handleTaskToggle(PACT_SUPPLY_TASK_ID)}
-            />
-            <label
-              htmlFor={PACT_SUPPLY_TASK_ID}
-              className={`text-xl font-bold text-primary cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
-            >
-              Pact Supply Network Agent
-            </label>
-          </div>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleCopyAll}
-            title="Click to copy all chatlinks"
-            className="h-8 w-8"
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-3">
+          <Checkbox
+            id={PACT_SUPPLY_TASK_ID}
+            checked={isCompleted}
+            onCheckedChange={() => handleTaskToggle(PACT_SUPPLY_TASK_ID)}
+          />
+          <label
+            htmlFor={PACT_SUPPLY_TASK_ID}
+            className={`text-xl font-bold text-primary cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
           >
-            <Copy className="h-4 w-4" />
-          </Button>
+            Pact Supply Network Agent
+          </label>
         </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleCopyAll}
+          title="Click to copy all chatlinks"
+          className="h-8 w-8"
+        >
+          <Copy className="h-4 w-4" />
+        </Button>
+      </CardHeader>
+      <CardContent>
         <div className="space-y-2 pl-8">
           {Object.entries(dailyLinks).map(([npc, chatlink]) => (
             <div key={npc} className="flex items-center justify-between text-sm">
@@ -100,8 +101,8 @@ const PactSupplyCard = ({ currentTime }) => {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </CardContent>
+    </Card>
   );
 };
 
