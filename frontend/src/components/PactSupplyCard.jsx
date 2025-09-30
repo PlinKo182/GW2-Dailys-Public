@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Copy } from 'lucide-react';
 import useStore from '../store/useStore';
-import { Card, CardHeader, CardContent } from '@/components/ui/Card';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/Card';
 
 const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
 const VENDORS = {
@@ -69,12 +69,9 @@ const PactSupplyCard = ({ currentTime }) => {
             checked={isCompleted}
             onCheckedChange={() => handleTaskToggle(PACT_SUPPLY_TASK_ID)}
           />
-          <label
-            htmlFor={PACT_SUPPLY_TASK_ID}
-            className={`text-xl font-bold text-primary cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
-          >
+          <CardTitle className={isCompleted ? 'line-through text-muted-foreground' : ''}>
             Pact Supply Network Agent
-          </label>
+          </CardTitle>
         </div>
         <Button
           variant="ghost"
@@ -90,9 +87,9 @@ const PactSupplyCard = ({ currentTime }) => {
         <div className="space-y-2 pl-8">
           {Object.entries(dailyLinks).map(([npc, chatlink]) => (
             <div key={npc} className="flex items-center justify-between text-sm">
-              <span className="font-medium text-foreground">{npc}</span>
+              <span className="font-medium text-muted-foreground">{npc}</span>
               <span
-                className="text-muted-foreground text-xs font-mono hover:bg-accent px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
+                className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150 cursor-pointer"
                 onClick={() => copyToClipboard(`${npc} - ${chatlink}`)}
                 title="Click to copy chatlink"
               >
