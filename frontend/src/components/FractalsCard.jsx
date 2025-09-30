@@ -38,7 +38,23 @@ const FractalsCard = () => {
         const achievements = achievementsResponse.data;
 
         const recommendedFractals = new Map();
-        const dailyFractals = new Map();
+        const dailyFractalsList = [];
+
+        const TIER_RANGES = {
+          "1": { min: 1, max: 25 },
+          "2": { min: 26, max: 50 },
+          "3": { min: 51, max: 75 },
+          "4": { min: 76, max: 100 },
+        };
+
+        const fractalToScales = {};
+        for (const scale in scaleToFractal) {
+          const name = scaleToFractal[scale];
+          if (!fractalToScales[name]) {
+            fractalToScales[name] = [];
+          }
+          fractalToScales[name].push(parseInt(scale, 10));
+        }
 
         achievements.forEach(ach => {
           if (ach.name.includes("Recommended")) {
@@ -48,12 +64,21 @@ const FractalsCard = () => {
               recommendedFractals.set(scale, fractalName);
             } catch (e) { /* Ignore parsing fails */ }
           } else {
-            const tierMatch = ach.name.match(/Daily (Tier ([1-4]))/);
+            const tierMatch = ach.name.match(/Daily Tier ([1-4])/);
             if (tierMatch) {
-              const tier = `T${tierMatch[2]}`;
-              const fractalName = ach.name.replace(tierMatch[0], '').replace('Fractal', '').trim();
-              if (fractalName && !dailyFractals.has(fractalName)) {
-                dailyFractals.set(fractalName, tier);
+              const tierNum = tierMatch[1];
+              const range = TIER_RANGES[tierNum];
+
+              let fractalName = ach.name.replace(`Daily Tier ${tierNum}`, '').replace('Fractal', '').trim();
+
+              const possibleScales = fractalToScales[fractalName] || [];
+              const scale = possibleScales.find(s => s >= range.min && s <= range.max);
+
+              if (fractalName && scale) {
+                const exists = dailyFractalsList.some(f => f.name === fractalName && f.scale === scale);
+                if (!exists) {
+                  dailyFractalsList.push({ name: fractalName, scale: scale });
+                }
               }
             }
           }
@@ -64,11 +89,11 @@ const FractalsCard = () => {
           .sort(([scaleA], [scaleB]) => scaleA - scaleB)
           .map(([scale, name]) => ({ id: `fractal_rec_${scale}`, name, scale }));
 
-        const sortedDailies = Array.from(dailyFractals.entries())
-          .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
-          .map(([name, tier]) => ({
-            id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}`,
-            name: `${tier} - ${name}`
+        const sortedDailies = dailyFractalsList
+          .sort((a, b) => a.scale - b.scale)
+          .map(({ name, scale }) => ({
+            id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}_${scale}`,
+            name: `${scale} - ${name}`
           }));
 
         setFractalTasks({
