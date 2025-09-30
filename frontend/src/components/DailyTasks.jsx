@@ -109,9 +109,9 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
 };
 
 import PactSupplyCard from './PactSupplyCard';
-import FractalsCard from './FractalsCard'; // Import the new placeholder card
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import FractalsCard from './FractalsCard';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ChevronDown } from 'lucide-react';
 
 const DailyTasks = ({ currentTime }) => {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -119,16 +119,9 @@ const DailyTasks = ({ currentTime }) => {
   const addCard = useStore((state) => state.addCard);
   const handleTaskToggle = useStore((state) => state.handleTaskToggle);
   const taskCompletion = useStore((state) => state.userData.taskCompletion);
-  const {
-    showPactSupplyCard,
-    togglePactSupplyCard,
-    showFractalsCard,
-    toggleFractalsCard
-  } = useStore((state) => ({
-    showPactSupplyCard: state.showPactSupplyCard,
-    togglePactSupplyCard: state.togglePactSupplyCard,
-    showFractalsCard: state.showFractalsCard,
-    toggleFractalsCard: state.toggleFractalsCard,
+  const { showOfficialDailies, toggleOfficialDailies } = useStore((state) => ({
+    showOfficialDailies: state.showOfficialDailies,
+    toggleOfficialDailies: state.toggleOfficialDailies,
   }));
 
   const copyToClipboard = useCallback((text) => {
@@ -138,32 +131,30 @@ const DailyTasks = ({ currentTime }) => {
 
   return (
     <div>
-      <div className="flex justify-end items-center gap-6 mb-4">
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="fractals-toggle"
-            checked={showFractalsCard}
-            onCheckedChange={toggleFractalsCard}
-          />
-          <Label htmlFor="fractals-toggle" className="text-sm">Fractals</Label>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="pact-supply-toggle"
-            checked={showPactSupplyCard}
-            onCheckedChange={togglePactSupplyCard}
-          />
-          <Label htmlFor="pact-supply-toggle" className="text-sm">Pact Supply</Label>
-        </div>
+      <div className="flex justify-between items-center mb-4">
+        <Collapsible open={showOfficialDailies} onOpenChange={toggleOfficialDailies}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost">
+              <ChevronDown className={`h-4 w-4 transition-transform ${showOfficialDailies ? 'rotate-180' : ''}`} />
+              <span className="ml-2">Official Dailies</span>
+            </Button>
+          </CollapsibleTrigger>
+        </Collapsible>
+
         <Button onClick={() => setIsEditMode(!isEditMode)} variant="outline">
           {isEditMode ? 'Done Editing' : 'Edit Dailies'}
         </Button>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* Conditionally render the special cards first */}
-        {showPactSupplyCard && <PactSupplyCard currentTime={currentTime} />}
-        {showFractalsCard && <FractalsCard />}
 
+      <CollapsibleContent>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
+          <PactSupplyCard currentTime={currentTime} />
+          <FractalsCard />
+        </div>
+        <hr className="border-border my-6" />
+      </CollapsibleContent>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Render all the user's custom task cards */}
         {customTasks.map(card => (
           <CustomTaskCard

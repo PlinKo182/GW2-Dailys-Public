@@ -46,16 +46,15 @@ const useStore = create((set, get) => ({
   eventFilters: {}, // For user-specific event filters
   notification: null,
   lastResetDate: 0,
-  showPactSupplyCard: true,
-  showFractalsCard: true,
-  fractalTasks: { recommended: [], dailies: [] }, // New state for fractal tasks
+  showOfficialDailies: false,
+  fractalTasks: { recommended: [], dailies: [], cms: [] },
 
   // --- ACTIONS ---
 
   _saveState: () => {
-    const { currentUser, lastResetDate, showPactSupplyCard, showFractalsCard } = get();
+    const { currentUser, lastResetDate, showOfficialDailies } = get();
     // Save app-level data like session and UI preferences
-    localStorageAPI.saveAppData({ currentUser, lastResetDate, showPactSupplyCard, showFractalsCard });
+    localStorageAPI.saveAppData({ currentUser, lastResetDate, showOfficialDailies });
   },
 
   loadInitialData: () => {
@@ -63,8 +62,7 @@ const useStore = create((set, get) => ({
     if (appData) {
         // Set UI preferences immediately
         set({
-          showPactSupplyCard: appData.showPactSupplyCard !== false, // Default to true
-          showFractalsCard: appData.showFractalsCard !== false // Default to true
+          showOfficialDailies: appData.showOfficialDailies === true // Default to false
         });
 
         // If a user session exists, log them in
@@ -75,15 +73,9 @@ const useStore = create((set, get) => ({
     }
   },
 
-  // Action to toggle the visibility of the Pact Supply card
-  togglePactSupplyCard: () => {
-    set(state => ({ showPactSupplyCard: !state.showPactSupplyCard }));
-    get()._saveState(); // Persist the change
-  },
-
-  // Action to toggle the visibility of the Fractals card
-  toggleFractalsCard: () => {
-    set(state => ({ showFractalsCard: !state.showFractalsCard }));
+  // Action to toggle the visibility of the official dailies section
+  toggleOfficialDailies: () => {
+    set(state => ({ showOfficialDailies: !state.showOfficialDailies }));
     get()._saveState(); // Persist the change
   },
 

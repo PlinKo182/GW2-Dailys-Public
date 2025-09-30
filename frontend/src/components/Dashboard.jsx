@@ -66,9 +66,8 @@ const Dashboard = () => {
     };
   }, [checkAndResetDailyProgress]);
 
-  const { showPactSupplyCard, showFractalsCard, fractalTasks } = useStore(state => ({
-    showPactSupplyCard: state.showPactSupplyCard,
-    showFractalsCard: state.showFractalsCard,
+  const { showOfficialDailies, fractalTasks } = useStore(state => ({
+    showOfficialDailies: state.showOfficialDailies,
     fractalTasks: state.fractalTasks,
   }));
 
@@ -76,14 +75,11 @@ const Dashboard = () => {
   const calculateOverallProgress = useCallback(() => {
     let allTasks = customTasks.flatMap(card => card.tasks);
 
-    if (showPactSupplyCard) {
+    if (showOfficialDailies) {
       const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
       const pactSupplyTasks = PACT_AGENTS.map(agent => ({ id: `pact_supply_${agent.toLowerCase()}` }));
       allTasks = [...allTasks, ...pactSupplyTasks];
-    }
 
-    // Include fractal tasks in progress if the card is visible
-    if (showFractalsCard) {
       const allFractalTasks = [
         ...(fractalTasks.recommended || []),
         ...(fractalTasks.dailies || []),
@@ -97,7 +93,7 @@ const Dashboard = () => {
 
     const completedTasks = allTasks.filter(task => taskCompletion[task.id]).length;
     return Math.round((completedTasks / totalTasks) * 100);
-  }, [customTasks, taskCompletion, showPactSupplyCard, showFractalsCard, fractalTasks]);
+  }, [customTasks, taskCompletion, showOfficialDailies, fractalTasks]);
 
   // Removido botão de salvar manual - agora é automático via useStore
 
