@@ -44,25 +44,31 @@ const FractalsCard = () => {
           if (ach.name.includes("Recommended")) {
             try {
               const scale = parseInt(ach.name.split("Scale ")[1], 10);
-              const fractalName = scaleToFractal[scale] || `Scale ${scale}`;
-              recommendedFractals.set(scale, fractalName);
+              if (!isNaN(scale)) {
+                const fractalName = scaleToFractal[scale] || `Scale ${scale}`;
+                recommendedFractals.set(scale, fractalName);
+              }
             } catch (e) { /* Ignore parsing fails */ }
           } else if (["Tier 1", "Tier 2", "Tier 3", "Tier 4"].some(tier => ach.name.includes(tier))) {
-            let fractalName = ach.name;
-            ["Daily Tier 1 ", "Daily Tier 2 ", "Daily Tier 3 ", "Daily Tier 4 ", "Fractal"].forEach(term => {
-              fractalName = fractalName.replace(term, "");
-            });
-            dailyFractals.add(fractalName.trim());
+            const match = ach.name.match(/\(Scale (\d+)\)/);
+            const scale = match ? parseInt(match[1], 10) : null;
+            if (scale) {
+              const fractalName = scaleToFractal[scale] || `Unknown Fractal`;
+              dailyFractals.add(`${scale} - ${fractalName}`);
+            }
           }
         });
 
         // Generate stable IDs and update the global store
         const sortedRecommended = Array.from(recommendedFractals.entries())
           .sort(([scaleA], [scaleB]) => scaleA - scaleB)
-          .map(([scale, name]) => ({ id: `fractal_rec_${scale}`, name, scale }));
+          .map(([scale, name]) => ({ id: `fractal_rec_${scale}`, name: `${scale} - ${name}` }));
 
-        const sortedDailies = Array.from(dailyFractals).sort()
-          .map(name => ({ id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}`, name }));
+        const sortedDailies = Array.from(dailyFractals).sort((a, b) => {
+            const scaleA = parseInt(a.split(' ')[0], 10);
+            const scaleB = parseInt(b.split(' ')[0], 10);
+            return scaleA - scaleB;
+          }).map(name => ({ id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}`, name }));
 
         setFractalTasks({
           recommended: sortedRecommended,
@@ -92,12 +98,12 @@ const FractalsCard = () => {
             <Award className="h-4 w-4" />
             Recommended
           </h4>
-          <ul className="space-y-2 text-sm">
-            {fractalTasks.recommended.map(({ id, name, scale }) => (
+          <ul className="space-y-2">
+            {fractalTasks.recommended.map(({ id, name }) => (
               <li key={id} className="flex items-center gap-2">
                 <Checkbox id={id} checked={taskCompletion[id]} onCheckedChange={() => handleTaskToggle(id)} />
-                <label htmlFor={id} className="text-muted-foreground cursor-pointer">
-                  {`${scale} - ${name}`}
+                <label htmlFor={id} className="cursor-pointer text-sm">
+                  {name}
                 </label>
               </li>
             ))}
@@ -109,11 +115,11 @@ const FractalsCard = () => {
             <List className="h-4 w-4" />
             Daily Tiers
           </h4>
-          <ul className="space-y-2 text-sm">
+          <ul className="space-y-2">
             {fractalTasks.dailies.map(({ id, name }) => (
                <li key={id} className="flex items-center gap-2">
                   <Checkbox id={id} checked={taskCompletion[id]} onCheckedChange={() => handleTaskToggle(id)} />
-                  <label htmlFor={id} className="text-muted-foreground cursor-pointer">{name}</label>
+                  <label htmlFor={id} className="cursor-pointer text-sm">{name}</label>
               </li>
             ))}
           </ul>
