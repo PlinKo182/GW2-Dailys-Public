@@ -78,18 +78,12 @@ const PactSupplyCard = ({ currentTime }) => {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between w-full">
-          <div className="flex items-center gap-3">
-            <Checkbox
-              id="pact_supply_all"
-              checked={isSomeCompleted ? 'indeterminate' : isAllCompleted}
-              onCheckedChange={handleToggleAll}
-            />
-            <CardTitle className={isAllCompleted ? 'line-through text-muted-foreground' : ''}>
-              Pact Supply Network Agent
-            </CardTitle>
-          </div>
-        </div>
+        <CardTitle
+          onClick={handleToggleAll}
+          className={`cursor-pointer ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
+        >
+          Pact Supply Network Agent
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="space-y-3 pl-2">

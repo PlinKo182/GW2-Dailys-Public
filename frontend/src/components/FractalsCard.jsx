@@ -114,10 +114,32 @@ const FractalsCard = () => {
     );
   };
 
+  const allFractalTaskIds = [
+    ...fractalTasks.recommended.map(t => t.id),
+    ...fractalTasks.dailies.map(t => t.id)
+  ];
+
+  const completedFractalTasks = allFractalTaskIds.filter(id => taskCompletion[id]);
+  const areAllFractalsCompleted = completedFractalTasks.length === allFractalTaskIds.length && allFractalTaskIds.length > 0;
+
+  const handleToggleAllFractals = () => {
+    const newCompletionState = !areAllFractalsCompleted;
+    allFractalTaskIds.forEach(id => {
+      if (!!taskCompletion[id] !== newCompletionState) {
+        handleTaskToggle(id, newCompletionState);
+      }
+    });
+  };
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Daily Fractals</CardTitle>
+        <CardTitle
+          onClick={handleToggleAllFractals}
+          className={`cursor-pointer ${areAllFractalsCompleted ? 'line-through text-muted-foreground' : ''}`}
+        >
+          Daily Fractals
+        </CardTitle>
       </CardHeader>
       <CardContent>
         {renderContent()}
