@@ -38,7 +38,7 @@ const FractalsCard = () => {
         const achievements = achievementsResponse.data;
 
         const recommendedFractals = new Map();
-        const dailyFractals = new Set();
+        const dailyFractals = new Map();
 
         achievements.forEach(ach => {
           if (ach.name.includes("Recommended")) {
@@ -47,12 +47,15 @@ const FractalsCard = () => {
               const fractalName = scaleToFractal[scale] || `Scale ${scale}`;
               recommendedFractals.set(scale, fractalName);
             } catch (e) { /* Ignore parsing fails */ }
-          } else if (["Tier 1", "Tier 2", "Tier 3", "Tier 4"].some(tier => ach.name.includes(tier))) {
-            let fractalName = ach.name;
-            ["Daily Tier 1 ", "Daily Tier 2 ", "Daily Tier 3 ", "Daily Tier 4 ", "Fractal"].forEach(term => {
-              fractalName = fractalName.replace(term, "");
-            });
-            dailyFractals.add(fractalName.trim());
+          } else {
+            const tierMatch = ach.name.match(/Daily (Tier ([1-4]))/);
+            if (tierMatch) {
+              const tier = `T${tierMatch[2]}`;
+              const fractalName = ach.name.replace(tierMatch[0], '').replace('Fractal', '').trim();
+              if (fractalName && !dailyFractals.has(fractalName)) {
+                dailyFractals.set(fractalName, tier);
+              }
+            }
           }
         });
 
@@ -61,8 +64,12 @@ const FractalsCard = () => {
           .sort(([scaleA], [scaleB]) => scaleA - scaleB)
           .map(([scale, name]) => ({ id: `fractal_rec_${scale}`, name, scale }));
 
-        const sortedDailies = Array.from(dailyFractals).sort()
-          .map(name => ({ id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}`, name }));
+        const sortedDailies = Array.from(dailyFractals.entries())
+          .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
+          .map(([name, tier]) => ({
+            id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}`,
+            name: `${tier} - ${name}`
+          }));
 
         setFractalTasks({
           recommended: sortedRecommended,

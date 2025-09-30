@@ -104,7 +104,7 @@ const PactSupplyCard = ({ currentTime }) => {
         </TooltipProvider>
       </CardHeader>
       <CardContent>
-        <div className="space-y-3 pl-2">
+        <div className="space-y-3 pl-2 text-sm">
           {PACT_AGENT_TASKS.map(task => {
             const chatlink = dailyLinks[task.name];
             const isCompleted = !!taskCompletion[task.id];
@@ -118,7 +118,7 @@ const PactSupplyCard = ({ currentTime }) => {
                 <div className="flex-1">
                   <label
                     htmlFor={task.id}
-                    className={`text-foreground cursor-pointer transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                    className={`cursor-pointer transition-colors ${isCompleted ? 'line-through text-muted-foreground' : 'text-muted-foreground'}`}
                   >
                     {task.name}
                   </label>
@@ -127,7 +127,7 @@ const PactSupplyCard = ({ currentTime }) => {
                   <button
                     onClick={() => copyToClipboard(`${task.name} - ${chatlink}`)}
                     aria-label={`Copy waypoint for ${task.name}`}
-                    className="text-primary text-xs font-mono hover:bg-muted px-2 py-1 rounded transition-colors duration-150"
+                    className="text-muted-foreground hover:bg-muted px-2 py-1 rounded transition-colors duration-150"
                     title="Click to copy chatlink"
                   >
                     {chatlink}
