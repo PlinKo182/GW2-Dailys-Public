@@ -6,33 +6,17 @@ import { LogoutButton } from './ui/LogoutButton';
 const Header = ({ currentTime, apiStatus, isOnline }) => {
   const getStatusDisplay = () => {
     if (!isOnline) {
-      return {
-        text: 'Offline',
-        className: 'bg-destructive/20 text-destructive-foreground'
-      };
+      return { text: 'Offline', className: 'bg-destructive/20 text-destructive-foreground' };
     }
-    
     switch (apiStatus) {
       case 'online':
-        return {
-          text: 'Online',
-          className: 'bg-primary/20 text-primary'
-        };
+        return { text: 'Online', className: 'bg-primary/20 text-primary' };
       case 'unavailable':
-        return {
-          text: 'API Unavailable',
-          className: 'bg-secondary/20 text-secondary-foreground'
-        };
+        return { text: 'API Unavailable', className: 'bg-secondary/20 text-secondary-foreground' };
       case 'checking':
-        return {
-          text: 'Checking...',
-          className: 'bg-muted/20 text-muted-foreground'
-        };
+        return { text: 'Checking...', className: 'bg-muted/20 text-muted-foreground' };
       default:
-        return {
-          text: 'Unknown',
-          className: 'bg-muted/20 text-muted-foreground'
-        };
+        return { text: 'Unknown', className: 'bg-muted/20 text-muted-foreground' };
     }
   };
 

@@ -66,15 +66,32 @@ const Dashboard = () => {
     };
   }, [checkAndResetDailyProgress]);
 
+  const { showPactSupplyCard, showFractalsCard, fractalTasks } = useStore(state => ({
+    showPactSupplyCard: state.showPactSupplyCard,
+    showFractalsCard: state.showFractalsCard,
+    fractalTasks: state.fractalTasks,
+  }));
+
   // New progress calculation logic for custom tasks
   const calculateOverallProgress = useCallback(() => {
-    const allTasks = customTasks.flatMap(card => card.tasks);
+    let allTasks = customTasks.flatMap(card => card.tasks);
+
+    if (showPactSupplyCard) {
+      allTasks.push({ id: 'pact_supply_run' });
+    }
+
+    // Include fractal tasks in progress if the card is visible
+    if (showFractalsCard) {
+      const allFractalTasks = [...fractalTasks.recommended, ...fractalTasks.dailies];
+      allTasks = [...allTasks, ...allFractalTasks];
+    }
+
     const totalTasks = allTasks.length;
     if (totalTasks === 0) return 0;
 
     const completedTasks = allTasks.filter(task => taskCompletion[task.id]).length;
     return Math.round((completedTasks / totalTasks) * 100);
-  }, [customTasks, taskCompletion]);
+  }, [customTasks, taskCompletion, showPactSupplyCard, showFractalsCard, fractalTasks]);
 
   // Removido botão de salvar manual - agora é automático via useStore
 
@@ -106,11 +123,6 @@ const Dashboard = () => {
       )}
 
       <main className="max-w-7xl mx-auto py-8 px-6">
-        <div className="mb-10">
-          <h2 className="text-3xl font-bold mb-2">Daily Dashboard</h2>
-          <p className="text-muted-foreground">Track your daily progress in Guild Wars 2</p>
-        </div>
-
         <DailyProgress overallProgress={calculateOverallProgress()} />
 
         <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="mt-8">
