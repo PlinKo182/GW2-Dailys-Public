@@ -1,14 +1,35 @@
 import React from 'react';
+import CustomTaskItem from './CustomTaskItem';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 
-const CustomTaskCard = ({ card }) => {
-  // Placeholder content
+const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, currentTime, isEditMode }) => {
+  // A guard against undefined card or tasks, which can happen during state transitions.
+  if (!card || !card.tasks) {
+    return null;
+  }
+
   return (
-    <div className="bg-card rounded-xl overflow-hidden shadow-lg border border-border flex flex-col">
-      <div className="p-6">
-        <h3 className="text-xl font-bold text-primary">{card.title}</h3>
-        {/* Task items will be rendered here */}
-      </div>
-    </div>
+    <Card>
+      <CardHeader>
+        <CardTitle>{card.title}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2 text-sm">
+          {card.tasks.map(task => (
+            <li key={task.id}>
+              <CustomTaskItem
+                task={task}
+                isCompleted={taskCompletion[task.id] || false}
+                onToggle={() => onTaskToggle(task.id)}
+                onCopyWaypoint={onCopyWaypoint}
+                currentTime={currentTime}
+                isEditMode={isEditMode}
+              />
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 };
 
