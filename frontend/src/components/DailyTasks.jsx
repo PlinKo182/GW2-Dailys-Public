@@ -152,12 +152,6 @@ const DailyTasks = ({ currentTime }) => {
 
   return (
     <div>
-      <div className="flex justify-end items-center mb-4">
-        <Button onClick={() => setIsEditMode(!isEditMode)} variant="outline">
-          {isEditMode ? 'Done Editing' : 'Edit Dailies'}
-        </Button>
-      </div>
-
       {/* Official Dailies Dropdown Menu */}
       <div className="mb-6">
         <div className="flex justify-between items-center mb-4">
@@ -208,6 +202,10 @@ const DailyTasks = ({ currentTime }) => {
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          
+          <Button onClick={() => setIsEditMode(!isEditMode)} variant="outline" size="sm">
+            {isEditMode ? 'Done Editing' : 'Edit Dailies'}
+          </Button>
         </div>
         
         {/* Official Dailies Cards - Only show if any are enabled */}
