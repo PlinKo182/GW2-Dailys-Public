@@ -28,14 +28,14 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
                   className={`cursor-pointer transition-colors ${taskCompletion[task.id] ? "line-through text-muted-foreground" : ""}`}
                 >
                   {task.name}
-                  {task.hasTimer && task.availability && (
-                    <TaskTimer
-                      availability={task.availability}
-                      currentTime={currentTime}
-                      inline
-                    />
-                  )}
                 </label>
+                {task.hasTimer && task.availability && (
+                  <TaskTimer
+                    availability={task.availability}
+                    currentTime={currentTime}
+                    inline
+                  />
+                )}
               </div>
               {task.waypoint && (
                 <button
