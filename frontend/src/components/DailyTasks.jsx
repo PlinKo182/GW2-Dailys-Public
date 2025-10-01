@@ -111,6 +111,7 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
 import PactSupplyCard from './PactSupplyCard';
 import FractalsCard from './FractalsCard';
 import ChallengeModeCard from './ChallengeModeCard';
+import StrikesCard from './StrikesCard';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ChevronDown, Package, Gem, Swords } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
@@ -126,7 +127,8 @@ const DailyTasks = ({ currentTime }) => {
     showOfficialDailies, toggleOfficialDailies,
     showPactSupply, togglePactSupply,
     showFractals, toggleFractals,
-    showChallengeModes, toggleChallengeModes
+    showChallengeModes, toggleChallengeModes,
+    showDailyStrikes, toggleDailyStrikes
   } = useStore((state) => ({
     showOfficialDailies: state.showOfficialDailies,
     toggleOfficialDailies: state.toggleOfficialDailies,
@@ -136,6 +138,8 @@ const DailyTasks = ({ currentTime }) => {
     toggleFractals: state.toggleFractals,
     showChallengeModes: state.showChallengeModes,
     toggleChallengeModes: state.toggleChallengeModes,
+    showDailyStrikes: state.showDailyStrikes,
+    toggleDailyStrikes: state.toggleDailyStrikes,
   }));
 
   const copyToClipboard = useCallback((text) => {
@@ -177,11 +181,16 @@ const DailyTasks = ({ currentTime }) => {
               <Switch id="cm-toggle" checked={showChallengeModes} onCheckedChange={toggleChallengeModes} />
               <Label htmlFor="cm-toggle">CMs</Label>
             </div>
+            <div className="flex items-center space-x-2">
+              <Switch id="strikes-toggle" checked={showDailyStrikes} onCheckedChange={toggleDailyStrikes} />
+              <Label htmlFor="strikes-toggle">Strikes</Label>
+            </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-4">
             {showPactSupply && <PactSupplyCard currentTime={currentTime} />}
             {showFractals && <FractalsCard />}
             {showChallengeModes && <ChallengeModeCard />}
+            {showDailyStrikes && <StrikesCard />}
           </div>
         </CollapsibleContent>
       </Collapsible>

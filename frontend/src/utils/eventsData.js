@@ -144,8 +144,8 @@ export const eventsData = {
         "waypoint": "Valance Tutory Waypoint - [&BEwCAAA=]",
         "link": "https://wiki.guildwars2.com/wiki/Defeat_the_Ley-Line_Anomaly_to_disperse_its_destructive_energy_before_it_overloads",
         "rewards": {
-          "item": { "name": "", "link": "", "itemId": 47874 },
-          "currency": { "amount": null, "type": "" }
+          "item": { "name": "Endless Ley-Line Anomaly Tonic", "link": "https://wiki.guildwars2.com/wiki/Endless_Ley-Line_Anomaly_Tonic_(container)", "itemId": 79034 },
+          "currency": { "amount": 1, "type": "mystic_coin" }
         }
       },
       "Iron Marches": {
@@ -154,8 +154,8 @@ export const eventsData = {
         "waypoint": "Village of Scalecatch Waypoint - [&BOcBAAA=]",
         "link": "https://wiki.guildwars2.com/wiki/Defeat_the_Ley-Line_Anomaly_to_disperse_its_destructive_energy_before_it_overloads",
         "rewards": {
-          "item": { "name": "", "link": "", "itemId": null },
-          "currency": { "amount": null, "type": "" }
+          "item": { "name": "Endless Ley-Line Anomaly Tonic", "link": "https://wiki.guildwars2.com/wiki/Endless_Ley-Line_Anomaly_Tonic_(container)", "itemId": 79034 },
+          "currency": { "amount": 1, "type": "mystic_coin" }
         }
       },
       "Gendarran Fields": {
@@ -164,7 +164,7 @@ export const eventsData = {
         "waypoint": "Provern Shore Waypoint - [&BOQAAAA=]",
         "link": "https://wiki.guildwars2.com/wiki/Defeat_the_Ley-Line_Anomaly_to_disperse_its_destructive_energy_before_it_overloads",
         "rewards": {
-          "item": { "name": "", "link": "", "itemId": null },
+          "item": { "name": "Endless Ley-Line Anomaly Tonic", "link": "https://wiki.guildwars2.com/wiki/Endless_Ley-Line_Anomaly_Tonic_(container)", "itemId": 79034 },
           "currency": { "amount": 1, "type": "mystic_coin" }
         }
       }
