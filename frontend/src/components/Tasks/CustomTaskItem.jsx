@@ -6,12 +6,12 @@ import TaskTimer from './TaskTimer';
 
 const CustomTaskItem = ({ task, isCompleted, onToggle, onUpdate, onDelete, onCopyWaypoint, currentTime, isEditMode }) => {
   return (
-    <div className="flex h-6 items-center space-x-3">
+    <div className="flex h-5 items-center space-x-3">
       <Checkbox
         id={`task-${task.id}`}
         checked={isCompleted}
         onCheckedChange={onToggle}
-        className="h-4 w-4"
+        className="h-3.5 w-3.5"
       />
       <div className="flex-1">
         <label

@@ -66,8 +66,8 @@ const ChallengeModeCard = () => {
                     {FRACTAL_CMS.map(({ id, name }) => {
                         const isCompleted = taskCompletion[id] || false;
                         return (
-                            <div key={id} className="flex h-6 items-center space-x-3">
-                                <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} className="h-4 w-4" />
+                            <div key={id} className="flex h-5 items-center space-x-3">
+                                <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} className="h-3.5 w-3.5" />
                                 <div className="flex-1">
                                     <label
                                         htmlFor={id}
