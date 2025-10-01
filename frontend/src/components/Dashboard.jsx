@@ -53,16 +53,26 @@ const Dashboard = () => {
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    const timeInterval = setInterval(() => {
+    // Optimized timer using requestAnimationFrame for better performance
+    let animationFrameId;
+    const updateTime = () => {
       setCurrentTime(new Date());
-      // The daily reset check is now handled inside the store, but we still need to trigger it
-      checkAndResetDailyProgress();
-    }, 1000);
+      // Check for daily reset every 30 seconds instead of every second
+      const now = Date.now();
+      if (!updateTime.lastResetCheck || now - updateTime.lastResetCheck > 30000) {
+        checkAndResetDailyProgress();
+        updateTime.lastResetCheck = now;
+      }
+      animationFrameId = requestAnimationFrame(updateTime);
+    };
+    updateTime();
 
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(timeInterval);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
     };
   }, [checkAndResetDailyProgress]);
 

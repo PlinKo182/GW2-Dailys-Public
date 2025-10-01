@@ -1,4 +1,4 @@
-// components/EventsFilter/EventsFilter.js
+// components/EventsFilter/EventsFilter.jsx
 import React, { useState, useEffect } from 'react';
 import { Filter, X, Save, Loader, ChevronRight, ChevronDown, Home, Folder, File } from 'lucide-react';
 

@@ -1,4 +1,4 @@
-// components/EventsSection/EventsSection.js
+// components/EventsSection/EventsSection.jsx
 import React, { useState, useMemo, useCallback } from 'react';
 import { Eye, EyeOff, Undo } from 'lucide-react';
 import { eventsData } from '../../utils/eventsData';
