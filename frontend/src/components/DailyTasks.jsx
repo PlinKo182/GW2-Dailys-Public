@@ -112,7 +112,7 @@ import PactSupplyCard from './PactSupplyCard';
 import FractalsCard from './FractalsCard';
 import ChallengeModeCard from './ChallengeModeCard';
 import StrikesCard from './StrikesCard';
-import { Settings, Package, Gem, Swords, Target } from 'lucide-react';
+import { Settings, Package, Gem, Swords } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -197,7 +197,7 @@ const DailyTasks = ({ currentTime }) => {
                 onCheckedChange={toggleDailyStrikes}
                 className="flex items-center gap-2"
               >
-                <Target className="h-4 w-4" />
+                <Swords className="h-4 w-4" />
                 Daily Strikes
               </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
