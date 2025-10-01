@@ -80,7 +80,7 @@ const Dashboard = () => {
 
   // New progress calculation logic for custom tasks
   const calculateOverallProgress = useCallback(() => {
-    let allTasks = customTasks.flatMap(card => card.sections.flatMap(section => section.tasks));
+    let allTasks = customTasks.flatMap(card => card.tasks);
 
     if (showPactSupply) {
       const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];

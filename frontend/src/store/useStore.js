@@ -17,61 +17,20 @@ let syncTimer = null;
 let filterSyncTimer = null;
 let tasksSyncTimer = null;
 
-// Helper to migrate old task structure to new section-based structure
-const migrateCustomTasks = (tasks) => {
-    return tasks.map(card => {
-        // If a card already has sections, it's the new format.
-        if (card.sections && Array.isArray(card.sections)) {
-            return card;
-        }
-        // If it's an old card with a `tasks` array, convert it.
-        if (card.tasks && Array.isArray(card.tasks)) {
-            return {
-                ...card,
-                sections: [{ id: uuidv4(), title: 'Default Section', tasks: card.tasks }],
-                tasks: undefined, // Remove old tasks array
-            };
-        }
-        // If it's a new or malformed card, initialize with an empty section
-        return {
-            ...card,
-            sections: [{ id: uuidv4(), title: 'Default Section', tasks: [] }],
-        };
-    });
-};
-
 // Helper to create default tasks for new users
 const createDefaultTaskCards = () => {
     const mapTasks = (tasks) => tasks.map(task => ({
-        id: task.id,
+        id: task.id, // Use the old string ID for mapping completion
         name: task.name,
         waypoint: task.waypoint || '',
         hasTimer: !!task.availability,
         availability: task.availability || null,
     }));
 
-    const createSection = (title, tasks) => ({
-        id: uuidv4(),
-        title,
-        tasks: mapTasks(tasks),
-    });
-
     return [
-        {
-            id: uuidv4(),
-            title: 'Daily Gathering',
-            sections: [createSection('Default Section', tasksData.gatheringTasks)],
-        },
-        {
-            id: uuidv4(),
-            title: 'Daily Crafting',
-            sections: [createSection('Default Section', tasksData.craftingTasks)],
-        },
-        {
-            id: uuidv4(),
-            title: 'Daily Specials',
-            sections: [createSection('Default Section', tasksData.specialTasks)],
-        },
+        { id: uuidv4(), title: 'Daily Gathering', tasks: mapTasks(tasksData.gatheringTasks) },
+        { id: uuidv4(), title: 'Daily Crafting', tasks: mapTasks(tasksData.craftingTasks) },
+        { id: uuidv4(), title: 'Daily Specials', tasks: mapTasks(tasksData.specialTasks) },
     ];
 };
 
@@ -184,14 +143,11 @@ const useStore = create((set, get) => ({
       const today = new Date().toISOString().slice(0, 10);
       const todayEntry = progress ? progress[today] : null;
 
-      let finalCustomTasks;
-      if (Array.isArray(customTasks) && customTasks.length > 0) {
-        // If we have tasks, migrate them to ensure they have the new section structure
-        finalCustomTasks = migrateCustomTasks(customTasks);
-      } else {
-        // If there are no tasks or the value is null/undefined, create default ones
+      let finalCustomTasks = customTasks;
+      // Ensure that we create default tasks if none exist or if the data is invalid.
+      if (!Array.isArray(customTasks) || customTasks.length === 0) {
         finalCustomTasks = createDefaultTaskCards();
-        // Save these new default tasks to the backend for the user
+        // Save these default tasks to the backend for the new user
         saveCustomTasks(userName, finalCustomTasks);
       }
 
@@ -202,13 +158,13 @@ const useStore = create((set, get) => ({
       set({
         currentUser: userName,
         userHistory: progress || {},
-        eventFilters: filters || {},
-        customTasks: finalCustomTasks || [],
+        eventFilters: filters || {}, // Ensure filters is an object
+        customTasks: finalCustomTasks || [], // Ensure customTasks is an array
         userData: {
-          taskCompletion: todayEntry?.dailyTasks || {}, // Backend's dailyTasks is now our taskCompletion
+          taskCompletion: todayEntry?.dailyTasks || {},
           completedEventTypes: todayEntry?.completedEventTypes || {},
         },
-        lastResetDate: currentUTCDate, // Update the reset date to prevent race condition
+        lastResetDate: currentUTCDate,
       });
       get()._saveState();
     } catch (error) {
@@ -244,11 +200,7 @@ const useStore = create((set, get) => ({
 
   // --- Actions for managing custom tasks ---
   addCard: (title) => {
-    const newCard = {
-      id: uuidv4(),
-      title: title || 'New Card',
-      sections: [{ id: uuidv4(), title: 'Default Section', tasks: [] }],
-    };
+    const newCard = { id: uuidv4(), title: title || 'New Card', tasks: [] };
     const newTasks = [...get().customTasks, newCard];
     get().setCustomTasks(newTasks);
   },
@@ -265,87 +217,32 @@ const useStore = create((set, get) => ({
     get().setCustomTasks(newTasks);
   },
 
-  addSection: (cardId, sectionTitle) => {
-    const newSection = { id: uuidv4(), title: sectionTitle || 'New Section', tasks: [] };
+  addTask: (cardId, taskName) => {
+    const newTask = { id: uuidv4(), name: taskName, waypoint: '', hasTimer: false };
     const newTasks = get().customTasks.map(card =>
-      card.id === cardId ? { ...card, sections: [...card.sections, newSection] } : card
+      card.id === cardId ? { ...card, tasks: [...card.tasks, newTask] } : card
     );
     get().setCustomTasks(newTasks);
   },
 
-  updateSectionTitle: (cardId, sectionId, newTitle) => {
+  updateTask: (cardId, taskId, updatedTask) => {
     const newTasks = get().customTasks.map(card => {
       if (card.id === cardId) {
-        const updatedSections = card.sections.map(section =>
-          section.id === sectionId ? { ...section, title: newTitle } : section
+        const updatedTasks = card.tasks.map(task =>
+          task.id === taskId ? { ...task, ...updatedTask } : task
         );
-        return { ...card, sections: updatedSections };
+        return { ...card, tasks: updatedTasks };
       }
       return card;
     });
     get().setCustomTasks(newTasks);
   },
 
-  deleteSection: (cardId, sectionId) => {
+  deleteTask: (cardId, taskId) => {
     const newTasks = get().customTasks.map(card => {
       if (card.id === cardId) {
-        // Prevent deleting the last section
-        if (card.sections.length <= 1) return card;
-        const filteredSections = card.sections.filter(section => section.id !== sectionId);
-        return { ...card, sections: filteredSections };
-      }
-      return card;
-    });
-    get().setCustomTasks(newTasks);
-  },
-
-  addTask: (cardId, sectionId, taskData) => {
-    const newTask = { ...taskData, id: uuidv4() };
-    const newTasks = get().customTasks.map(card => {
-      if (card.id === cardId) {
-        const updatedSections = card.sections.map(section => {
-          if (section.id === sectionId) {
-            return { ...section, tasks: [...section.tasks, newTask] };
-          }
-          return section;
-        });
-        return { ...card, sections: updatedSections };
-      }
-      return card;
-    });
-    get().setCustomTasks(newTasks);
-  },
-
-  updateTask: (cardId, sectionId, taskId, updatedTask) => {
-    const newTasks = get().customTasks.map(card => {
-      if (card.id === cardId) {
-        const updatedSections = card.sections.map(section => {
-          if (section.id === sectionId) {
-            const updatedTasks = section.tasks.map(task =>
-              task.id === taskId ? { ...task, ...updatedTask } : task
-            );
-            return { ...section, tasks: updatedTasks };
-          }
-          return section;
-        });
-        return { ...card, sections: updatedSections };
-      }
-      return card;
-    });
-    get().setCustomTasks(newTasks);
-  },
-
-  deleteTask: (cardId, sectionId, taskId) => {
-    const newTasks = get().customTasks.map(card => {
-      if (card.id === cardId) {
-        const updatedSections = card.sections.map(section => {
-          if (section.id === sectionId) {
-            const filteredTasks = section.tasks.filter(task => task.id !== taskId);
-            return { ...section, tasks: filteredTasks };
-          }
-          return section;
-        });
-        return { ...card, sections: updatedSections };
+        const filteredTasks = card.tasks.filter(task => task.id !== taskId);
+        return { ...card, tasks: filteredTasks };
       }
       return card;
     });

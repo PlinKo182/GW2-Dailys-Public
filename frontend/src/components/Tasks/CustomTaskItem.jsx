@@ -6,7 +6,7 @@ import TaskTimer from './TaskTimer';
 
 const CustomTaskItem = ({ task, isCompleted, onToggle, onUpdate, onDelete, onCopyWaypoint, currentTime, isEditMode }) => {
   return (
-    <div className="flex items-center space-x-3 text-sm">
+    <div className="flex items-center space-x-3">
       <Checkbox
         id={`task-${task.id}`}
         checked={isCompleted}
@@ -31,7 +31,7 @@ const CustomTaskItem = ({ task, isCompleted, onToggle, onUpdate, onDelete, onCop
         <button
           onClick={() => onCopyWaypoint(task.waypoint)}
           aria-label={`Copy waypoint for ${task.name}`}
-          className="text-muted-foreground hover:bg-muted px-2 py-1 rounded transition-colors duration-150"
+          className="text-green-600 hover:underline text-sm font-mono transition-colors duration-150"
           title="Click to copy waypoint"
         >
           {task.waypoint}
