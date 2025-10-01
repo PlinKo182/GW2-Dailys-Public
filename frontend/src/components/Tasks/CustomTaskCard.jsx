@@ -13,7 +13,7 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
       <CardHeader>
         <CardTitle>{card.title}</CardTitle>
       </CardHeader>
-      <CardContent className="py-2">
+            <CardContent className="py-2">
         <div className="space-y-1 text-sm">
           {card.tasks.map(task => {
             const isCompleted = !!taskCompletion[task.id];

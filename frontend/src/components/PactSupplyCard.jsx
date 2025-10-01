@@ -14,11 +14,11 @@ import {
 const PACT_AGENTS = ["Mehem the Traveled", "The Fox", "Specialist Yana", "Lady Derwena", "Despina Katelyn", "Verma Giftrender"];
 const VENDORS = {
   "Mehem the Traveled":   {0: "[&BIcHAAA=]", 1: "[&BH8HAAA=]", 2: "[&BH4HAAA=]", 3: "[&BKsHAAA=]", 4: "[&BJQHAAA=]", 5: "[&BH8HAAA=]", 6: "[&BIkHAAA=]"},
-  "The Fox":     {0: "[&BEwDAAA=]", 1: "[&BEgAAAA=]", 2: "[&BMIBAAA=]", 3: "[&BE8AAAA=]", 4: "[&BMMCAAA=]", 5: "[&BLkCAAA=]", 6: "[&BDoBAAA=]"},
-  "Lady Derwena": {0: "[&BKYBAAA=]", 1: "[&BBkAAAA=]", 2: "[&BKYAAAA=]", 3: "[&BIMAAAA=]", 4: "[&BNUGAAA=]", 5: "[&BJIBAAA=]", 6: "[&BC0AAAA=]"},
-  "Specialist Yana":    {0: "[&BNIEAAA=]", 1: "[&BKgCAAA=]", 2: "[&BP0CAAA=]", 3: "[&BP0DAAA=]", 4: "[&BJsCAAA=]", 5: "[&BBEDAAA=]", 6: "[&BO4CAAA=]"},
-  "Despina Katelyn": {0: "[&BIMCAAA=]", 1: "[&BGQCAAA=]", 2: "[&BDgDAAA=]", 3: "[&BF0GAAA=]", 4: "[&BHsBAAA=]", 5: "[&BEICAAA=]", 6: "[&BIUCAAA=]"},
-  "Verma Giftrender":   {0: "[&BA8CAAA=]", 1: "[&BIMBAAA=]", 2: "[&BPEBAAA=]", 3: "[&BOcBAAA=]", 4: "[&BNMAAAA=]", 5: "[&BBABAAA=]", 6: "[&BCECAAA=]"}
+  "The Fox":              {0: "[&BEwDAAA=]", 1: "[&BEgAAAA=]", 2: "[&BMIBAAA=]", 3: "[&BE8AAAA=]", 4: "[&BMMCAAA=]", 5: "[&BLkCAAA=]", 6: "[&BDoBAAA=]"},
+  "Lady Derwena":         {0: "[&BKYBAAA=]", 1: "[&BBkAAAA=]", 2: "[&BKYAAAA=]", 3: "[&BIMAAAA=]", 4: "[&BNUGAAA=]", 5: "[&BJIBAAA=]", 6: "[&BC0AAAA=]"},
+  "Specialist Yana":      {0: "[&BNIEAAA=]", 1: "[&BKgCAAA=]", 2: "[&BP0CAAA=]", 3: "[&BP0DAAA=]", 4: "[&BJsCAAA=]", 5: "[&BBEDAAA=]", 6: "[&BO4CAAA=]"},
+  "Despina Katelyn":      {0: "[&BIMCAAA=]", 1: "[&BGQCAAA=]", 2: "[&BDgDAAA=]", 3: "[&BF0GAAA=]", 4: "[&BHsBAAA=]", 5: "[&BEICAAA=]", 6: "[&BIUCAAA=]"},
+  "Verma Giftrender":     {0: "[&BA8CAAA=]", 1: "[&BIMBAAA=]", 2: "[&BPEBAAA=]", 3: "[&BOcBAAA=]", 4: "[&BNMAAAA=]", 5: "[&BBABAAA=]", 6: "[&BCECAAA=]"}
 };
 
 const getPsnaChatlinks = (now) => {

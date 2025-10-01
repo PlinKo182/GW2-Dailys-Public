@@ -61,8 +61,8 @@ const ChallengeModeCard = () => {
                     </Tooltip>
                 </TooltipProvider>
             </CardHeader>
-            <CardContent>
-                <div className="space-y-2 text-sm">
+            <CardContent className="py-2">
+                <div className="space-y-1 text-sm">
                     {FRACTAL_CMS.map(({ id, name }) => {
                         const isCompleted = taskCompletion[id] || false;
                         return (

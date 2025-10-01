@@ -112,20 +112,20 @@ const FractalsCard = () => {
       return <div className="text-destructive text-center py-4">{error}</div>;
     }
     return (
-      <div className="space-y-4">
+      <div className="space-y-3">
         <div>
-          <h4 className="flex items-center gap-2 text-md font-semibold text-foreground mb-2">
+          <h4 className="flex items-center gap-2 text-md font-semibold text-foreground mb-1">
             <Award className="h-4 w-4" />
             Recommended
           </h4>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-1 text-sm">
             {fractalTasks.recommended.map(({ id, name, scale }) => {
                 const isCompleted = taskCompletion[id] || false;
                 return (
-                  <div key={id} className="flex items-center space-x-3">
-                    <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
+                  <div key={id} className="flex h-5 items-center space-x-3">
+                    <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} className="h-3.5 w-3.5" />
                     <div className="flex-1">
-                      <label htmlFor={id} className={`cursor-pointer transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                      <label htmlFor={id} className={`cursor-pointer leading-none flex items-center gap-2 transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
                         {scale} - {name}
                       </label>
                     </div>
@@ -136,11 +136,11 @@ const FractalsCard = () => {
         </div>
         <Separator />
         <div>
-          <h4 className="flex items-center gap-2 text-md font-semibold text-foreground mb-2">
+          <h4 className="flex items-center gap-2 text-md font-semibold text-foreground mb-1">
             <List className="h-4 w-4" />
             Daily Tiers
           </h4>
-          <div className="space-y-2 text-sm">
+          <div className="space-y-1 text-sm">
             {fractalTasks.dailies.map(({ id, name }) => {
                 const isCompleted = taskCompletion[id] || false;
                 return (
@@ -197,7 +197,7 @@ const FractalsCard = () => {
           </Tooltip>
         </TooltipProvider>
       </CardHeader>
-      <CardContent>
+      <CardContent className="py-2">
         {renderContent()}
       </CardContent>
     </Card>
