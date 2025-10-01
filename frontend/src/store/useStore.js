@@ -292,16 +292,25 @@ const useStore = create((set, get) => ({
         const today = new Date().toISOString().slice(0, 10);
         const newCompletedEventTypes = { ...(state.userData.completedEventTypes || {}) };
 
-        // This logic seems overly complex, but we'll retain it for now.
+        // Simplified logic - the eventKey should already be the full path
         const getFullEventPath = (key) => {
+          // If the key already looks like a full path, return it as is
+          if (key.includes('_') && key.split('_').length >= 3) {
+            return key;
+          }
+          
+          // Otherwise, search for the event in the data
           for (const [expansion, expansionData] of Object.entries(eventsData)) {
             for (const [zone, zoneData] of Object.entries(expansionData)) {
               for (const [event] of Object.entries(zoneData)) {
                 const eventNormalized = event.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                if (key.includes(eventNormalized)) {
-                  const expansionKey = expansion.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                  const zoneKey = zone.toLowerCase().replace(/[^a-z0-9]/g, '_');
-                  return `${expansionKey}_${zoneKey}_${eventNormalized}`;
+                const expansionKey = expansion.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                const zoneKey = zone.toLowerCase().replace(/[^a-z0-9]/g, '_');
+                const fullPath = `${expansionKey}_${zoneKey}_${eventNormalized}`;
+                
+                // Exact match or key ends with the event name
+                if (key === fullPath || key.endsWith(eventNormalized)) {
+                  return fullPath;
                 }
               }
             }
