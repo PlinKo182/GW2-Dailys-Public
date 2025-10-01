@@ -1,7 +1,6 @@
 // components/Dashboard.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './Header';
-import DailyProgress from './DailyProgress';
 import DailyTasks from './DailyTasks';
 import EventsSection from './EventsSection/EventsSection';
 import Footer from './Footer';
@@ -88,42 +87,7 @@ const Dashboard = () => {
     fractalTasks: state.fractalTasks,
   }));
 
-  // New progress calculation logic for custom tasks
-  const calculateOverallProgress = useCallback(() => {
-    let allTasks = customTasks.flatMap(card => card.tasks);
 
-    if (showPactSupply) {
-      const PACT_AGENTS = ["Mehem", "Fox", "Yana", "Derwena", "Katelyn", "Verma"];
-      const pactSupplyTasks = PACT_AGENTS.map(agent => ({ id: `pact_supply_${agent.toLowerCase()}` }));
-      allTasks = [...allTasks, ...pactSupplyTasks];
-    }
-
-    if (showFractals) {
-        const fractalDailies = [
-            ...(fractalTasks.recommended || []),
-            ...(fractalTasks.dailies || [])
-        ];
-        allTasks = [...allTasks, ...fractalDailies];
-    }
-
-    if (showChallengeModes) {
-        const FRACTAL_CMS = [
-            { name: "Nightmare", id: "fractal_cm_nightmare" },
-            { name: "Shattered Observatory", id: "fractal_cm_shattered_observatory" },
-            { name: "Sunqua Peak", id: "fractal_cm_sunqua_peak" },
-            { name: "Silent Surf", id: "fractal_cm_silent_surf" },
-            { name: "Lonely Tower", id: "fractal_cm_lonely_tower" },
-            { name: "Kinfall", id: "fractal_cm_kinfall" },
-        ];
-        allTasks = [...allTasks, ...FRACTAL_CMS];
-    }
-
-    const totalTasks = allTasks.length;
-    if (totalTasks === 0) return 0;
-
-    const completedTasks = allTasks.filter(task => taskCompletion[task.id]).length;
-    return Math.round((completedTasks / totalTasks) * 100);
-  }, [customTasks, taskCompletion, showPactSupply, showFractals, showChallengeModes, fractalTasks]);
 
   // Removido botão de salvar manual - agora é automático via useStore
 
@@ -155,8 +119,6 @@ const Dashboard = () => {
       )}
 
       <main className="max-w-7xl mx-auto py-8 px-6">
-        <DailyProgress overallProgress={calculateOverallProgress()} />
-
         <Tabs.Root value={activeTab} onValueChange={setActiveTab} className="mt-8">
           <Tabs.List className="border-b border-border flex items-center gap-4">
             <Tabs.Trigger
