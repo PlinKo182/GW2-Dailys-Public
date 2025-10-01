@@ -112,8 +112,7 @@ import PactSupplyCard from './PactSupplyCard';
 import FractalsCard from './FractalsCard';
 import ChallengeModeCard from './ChallengeModeCard';
 import StrikesCard from './StrikesCard';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Package, Gem, Swords } from 'lucide-react';
+import { Package } from 'lucide-react';
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 
@@ -124,14 +123,11 @@ const DailyTasks = ({ currentTime }) => {
   const handleTaskToggle = useStore((state) => state.handleTaskToggle);
   const taskCompletion = useStore((state) => state.userData.taskCompletion);
   const {
-    showOfficialDailies, toggleOfficialDailies,
     showPactSupply, togglePactSupply,
     showFractals, toggleFractals,
     showChallengeModes, toggleChallengeModes,
     showDailyStrikes, toggleDailyStrikes
   } = useStore((state) => ({
-    showOfficialDailies: state.showOfficialDailies,
-    toggleOfficialDailies: state.toggleOfficialDailies,
     showPactSupply: state.showPactSupply,
     togglePactSupply: state.togglePactSupply,
     showFractals: state.showFractals,
@@ -155,45 +151,43 @@ const DailyTasks = ({ currentTime }) => {
         </Button>
       </div>
 
-      <Collapsible open={showOfficialDailies} onOpenChange={toggleOfficialDailies} className="mb-6 border-b pb-4">
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full justify-start px-2 text-lg font-semibold">
-            <ChevronDown className={`h-5 w-5 mr-2 transition-transform ${showOfficialDailies ? 'rotate-180' : ''}`} />
-            Official Dailies
-            <span className="flex items-center gap-2 ml-2 text-muted-foreground">
-              <Package className="h-4 w-4" />
-              <Gem className="h-4 w-4" />
-              <Swords className="h-4 w-4" />
-            </span>
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="flex items-center justify-end space-x-4 pt-4">
+      {/* Compact Official Dailies Toggle Bar */}
+      <div className="mb-6 border border-border rounded-lg p-4 bg-card/50">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            <Package className="h-4 w-4" />
+            Official Dailies:
+          </div>
+          <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center space-x-2">
-              <Switch id="pact-supply-toggle" checked={showPactSupply} onCheckedChange={togglePactSupply} />
-              <Label htmlFor="pact-supply-toggle">Pact Supply</Label>
+              <Switch id="pact-supply-toggle" size="sm" checked={showPactSupply} onCheckedChange={togglePactSupply} />
+              <Label htmlFor="pact-supply-toggle" className="text-sm">Pact Supply</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Switch id="fractals-toggle" checked={showFractals} onCheckedChange={toggleFractals} />
-              <Label htmlFor="fractals-toggle">Fractals</Label>
+              <Switch id="fractals-toggle" size="sm" checked={showFractals} onCheckedChange={toggleFractals} />
+              <Label htmlFor="fractals-toggle" className="text-sm">Fractals</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Switch id="cm-toggle" checked={showChallengeModes} onCheckedChange={toggleChallengeModes} />
-              <Label htmlFor="cm-toggle">CMs</Label>
+              <Switch id="cm-toggle" size="sm" checked={showChallengeModes} onCheckedChange={toggleChallengeModes} />
+              <Label htmlFor="cm-toggle" className="text-sm">CMs</Label>
             </div>
             <div className="flex items-center space-x-2">
-              <Switch id="strikes-toggle" checked={showDailyStrikes} onCheckedChange={toggleDailyStrikes} />
-              <Label htmlFor="strikes-toggle">Strikes</Label>
+              <Switch id="strikes-toggle" size="sm" checked={showDailyStrikes} onCheckedChange={toggleDailyStrikes} />
+              <Label htmlFor="strikes-toggle" className="text-sm">Strikes</Label>
             </div>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-4">
+        </div>
+        
+        {/* Official Dailies Cards - Only show if any are enabled */}
+        {(showPactSupply || showFractals || showChallengeModes || showDailyStrikes) && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4 pt-4 border-t border-border">
             {showPactSupply && <PactSupplyCard currentTime={currentTime} />}
             {showFractals && <FractalsCard />}
             {showChallengeModes && <ChallengeModeCard />}
             {showDailyStrikes && <StrikesCard />}
           </div>
-        </CollapsibleContent>
-      </Collapsible>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         {/* Render all the user's custom task cards */}

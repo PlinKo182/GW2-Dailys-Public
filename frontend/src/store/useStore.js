@@ -46,7 +46,6 @@ const useStore = create((set, get) => ({
   eventFilters: {}, // For user-specific event filters
   notification: null,
   lastResetDate: 0,
-  showOfficialDailies: false,
   showPactSupply: true,
   showDailyStrikes: true,
   toggleDailyStrikes: () => set(state => ({ showDailyStrikes: !state.showDailyStrikes })),
@@ -59,9 +58,9 @@ const useStore = create((set, get) => ({
   // --- ACTIONS ---
 
   _saveState: () => {
-    const { currentUser, lastResetDate, showOfficialDailies, showPactSupply, showFractals, showChallengeModes } = get();
+    const { currentUser, lastResetDate, showPactSupply, showFractals, showChallengeModes } = get();
     // Save app-level data like session and UI preferences
-    localStorageAPI.saveAppData({ currentUser, lastResetDate, showOfficialDailies, showPactSupply, showFractals, showChallengeModes });
+    localStorageAPI.saveAppData({ currentUser, lastResetDate, showPactSupply, showFractals, showChallengeModes });
   },
 
   loadInitialData: () => {
@@ -69,7 +68,6 @@ const useStore = create((set, get) => ({
     if (appData) {
         // Set UI preferences immediately
         set({
-          showOfficialDailies: appData.showOfficialDailies === true,
           showPactSupply: appData.showPactSupply !== false,
           showFractals: appData.showFractals !== false,
           showChallengeModes: appData.showChallengeModes !== false,
@@ -81,12 +79,6 @@ const useStore = create((set, get) => ({
             get().loginUser(appData.currentUser);
         }
     }
-  },
-
-  // Action to toggle the visibility of the official dailies section
-  toggleOfficialDailies: () => {
-    set(state => ({ showOfficialDailies: !state.showOfficialDailies }));
-    get()._saveState(); // Persist the change
   },
 
   togglePactSupply: () => {
