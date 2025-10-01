@@ -22,25 +22,27 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
                 checked={taskCompletion[task.id] || false}
                 onCheckedChange={() => onTaskToggle(task.id)}
               />
-              <label
-                htmlFor={task.id}
-                className={`cursor-pointer transition-colors ${taskCompletion[task.id] ? "line-through text-muted-foreground" : ""}`}
-              >
-                {task.name}
-                {task.hasTimer && task.availability && (
-                  <TaskTimer
-                    availability={task.availability}
-                    currentTime={currentTime}
-                    inline
-                  />
-                )}
-              </label>
+              <div className="flex-1">
+                <label
+                  htmlFor={task.id}
+                  className={`cursor-pointer transition-colors ${taskCompletion[task.id] ? "line-through text-muted-foreground" : ""}`}
+                >
+                  {task.name}
+                  {task.hasTimer && task.availability && (
+                    <TaskTimer
+                      availability={task.availability}
+                      currentTime={currentTime}
+                      inline
+                    />
+                  )}
+                </label>
+              </div>
               {task.waypoint && (
                 <button
                   onClick={() => onCopyWaypoint(task.waypoint)}
                   aria-label={`Copy waypoint for ${task.name}`}
                   className="text-green-600 hover:underline text-sm font-mono transition-colors duration-150"
-                  title="Click to copy waypoint"
+                  title="Click to copy waypoint"  
                 >
                   {task.waypoint}
                 </button>
