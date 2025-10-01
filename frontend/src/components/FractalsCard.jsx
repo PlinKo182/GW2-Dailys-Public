@@ -122,12 +122,11 @@ const FractalsCard = () => {
             {fractalTasks.recommended.map(({ id, name, scale }) => {
                 const isCompleted = taskCompletion[id] || false;
                 return (
-                  <li key={id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
-                      <label htmlFor={id} className={`text-sm cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{name}</label>
-                    </div>
-                    <Badge variant="secondary">{scale}</Badge>
+                  <li key={id} className="flex items-center gap-2">
+                    <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
+                    <label htmlFor={id} className={`text-sm cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                      {scale} - {name}
+                    </label>
                   </li>
                 );
             })}
