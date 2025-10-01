@@ -112,9 +112,16 @@ import PactSupplyCard from './PactSupplyCard';
 import FractalsCard from './FractalsCard';
 import ChallengeModeCard from './ChallengeModeCard';
 import StrikesCard from './StrikesCard';
-import { Package } from 'lucide-react';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { Settings, Package, Gem, Swords, Target } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuCheckboxItem,
+} from "@/components/ui/dropdown-menu";
+
 
 const DailyTasks = ({ currentTime }) => {
   const [isEditMode, setIsEditMode] = useState(false);
@@ -151,36 +158,61 @@ const DailyTasks = ({ currentTime }) => {
         </Button>
       </div>
 
-      {/* Compact Official Dailies Toggle Bar */}
-      <div className="mb-6 border border-border rounded-lg p-4 bg-card/50">
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-            <Package className="h-4 w-4" />
-            Official Dailies:
-          </div>
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center space-x-2">
-              <Switch id="pact-supply-toggle" size="sm" checked={showPactSupply} onCheckedChange={togglePactSupply} />
-              <Label htmlFor="pact-supply-toggle" className="text-sm">Pact Supply</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="fractals-toggle" size="sm" checked={showFractals} onCheckedChange={toggleFractals} />
-              <Label htmlFor="fractals-toggle" className="text-sm">Fractals</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="cm-toggle" size="sm" checked={showChallengeModes} onCheckedChange={toggleChallengeModes} />
-              <Label htmlFor="cm-toggle" className="text-sm">CMs</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="strikes-toggle" size="sm" checked={showDailyStrikes} onCheckedChange={toggleDailyStrikes} />
-              <Label htmlFor="strikes-toggle" className="text-sm">Strikes</Label>
-            </div>
-          </div>
+      {/* Official Dailies Dropdown Menu */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="flex items-center gap-2">
+                <Settings className="h-4 w-4" />
+                Official Dailies
+                {(showPactSupply || showFractals || showChallengeModes || showDailyStrikes) && (
+                  <span className="ml-1 h-2 w-2 bg-primary rounded-full"></span>
+                )}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-48">
+              <DropdownMenuLabel>Enable Official Dailies</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuCheckboxItem
+                checked={showPactSupply}
+                onCheckedChange={togglePactSupply}
+                className="flex items-center gap-2"
+              >
+                <Package className="h-4 w-4" />
+                Pact Supply Network
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showFractals}
+                onCheckedChange={toggleFractals}
+                className="flex items-center gap-2"
+              >
+                <Gem className="h-4 w-4" />
+                Daily Fractals
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showChallengeModes}
+                onCheckedChange={toggleChallengeModes}
+                className="flex items-center gap-2"
+              >
+                <Swords className="h-4 w-4" />
+                Challenge Modes
+              </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={showDailyStrikes}
+                onCheckedChange={toggleDailyStrikes}
+                className="flex items-center gap-2"
+              >
+                <Target className="h-4 w-4" />
+                Daily Strikes
+              </DropdownMenuCheckboxItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         
         {/* Official Dailies Cards - Only show if any are enabled */}
         {(showPactSupply || showFractals || showChallengeModes || showDailyStrikes) && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-4 pt-4 border-t border-border">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {showPactSupply && <PactSupplyCard currentTime={currentTime} />}
             {showFractals && <FractalsCard />}
             {showChallengeModes && <ChallengeModeCard />}
