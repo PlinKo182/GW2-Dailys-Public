@@ -31,45 +31,73 @@ const FractalsCard = () => {
       setLoading(true);
       setError(null);
       try {
-        const categoryResponse = await axios.get("https://api.guildwars2.com/v2/achievements/categories/88");
-        const achievementIds = categoryResponse.data.achievements;
+        // Fetch the list of today's daily achievements
+        const dailyResponse = await axios.get("https://api.guildwars2.com/v2/achievements/daily");
 
-        const achievementsResponse = await axios.get(`https://api.guildwars2.com/v2/achievements?ids=${achievementIds.join(',')}`);
+        // Ensure the fractals property exists and is an array
+        const fractalAchievements = dailyResponse.data.fractals;
+        if (!Array.isArray(fractalAchievements) || fractalAchievements.length === 0) {
+          setFractalTasks({ recommended: [], dailies: [] });
+          setLoading(false);
+          return;
+        }
+
+        const fractalAchievementIds = fractalAchievements.map(f => f.id);
+
+        // Fetch the details for each of those achievements
+        const achievementsResponse = await axios.get(`https://api.guildwars2.com/v2/achievements?ids=${fractalAchievementIds.join(',')}`);
         const achievements = achievementsResponse.data;
 
         const recommendedFractals = new Map();
         const dailyFractals = new Set();
 
         achievements.forEach(ach => {
+          const scaleMatch = ach.name.match(/Scale (\d+)/);
+          const scale = scaleMatch ? parseInt(scaleMatch[1], 10) : null;
+
           if (ach.name.includes("Recommended")) {
-            try {
-              const scale = parseInt(ach.name.split("Scale ")[1], 10);
+            if (scale) {
               const fractalName = scaleToFractal[scale] || `Scale ${scale}`;
+              // For recommended, we store scale and name separately to keep the badge UI
               recommendedFractals.set(scale, fractalName);
-            } catch (e) { /* Ignore parsing fails */ }
+            }
           } else if (["Tier 1", "Tier 2", "Tier 3", "Tier 4"].some(tier => ach.name.includes(tier))) {
-            let fractalName = ach.name;
-            ["Daily Tier 1 ", "Daily Tier 2 ", "Daily Tier 3 ", "Daily Tier 4 ", "Fractal"].forEach(term => {
-              fractalName = fractalName.replace(term, "");
-            });
-            dailyFractals.add(fractalName.trim());
+            if (scale) {
+              const fractalName = scaleToFractal[scale] || `Unknown Fractal`;
+              // For daily tiers, we create the combined name string
+              dailyFractals.add(`${scale} - ${fractalName}`);
+            } else {
+              // Fallback for generic dailies
+              dailyFractals.add(ach.name);
+            }
           }
         });
 
         // Generate stable IDs and update the global store
+        // Recommended fractals keep their structure for the badge display
         const sortedRecommended = Array.from(recommendedFractals.entries())
           .sort(([scaleA], [scaleB]) => scaleA - scaleB)
           .map(([scale, name]) => ({ id: `fractal_rec_${scale}`, name, scale }));
 
-        const sortedDailies = Array.from(dailyFractals).sort()
-          .map(name => ({ id: `fractal_daily_${name.toLowerCase().replace(/\s+/g, '_')}`, name }));
+        // Daily tiers have the pre-formatted name
+        const sortedDailies = Array.from(dailyFractals).sort((a, b) => {
+            const scaleA = parseInt(a.split(' ')[0], 10);
+            const scaleB = parseInt(b.split(' ')[0], 10);
+
+            if (isNaN(scaleA) && isNaN(scaleB)) return a.localeCompare(b);
+            if (isNaN(scaleA)) return 1;
+            if (isNaN(scaleB)) return -1;
+
+            return scaleA - scaleB;
+          }).map(name => ({ id: `fractal_daily_${name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`, name }));
 
         setFractalTasks({
           recommended: sortedRecommended,
           dailies: sortedDailies,
         });
       } catch (err) {
-        setError("Failed to fetch daily fractals. The API might be down.");
+        console.error("Error fetching daily fractals:", err);
+        setError("Failed to fetch daily fractals. The API might be down or returned an unexpected response.");
       } finally {
         setLoading(false);
       }
@@ -92,16 +120,19 @@ const FractalsCard = () => {
             <Award className="h-4 w-4" />
             Recommended
           </h4>
-          <ul className="space-y-2 text-sm">
-            {fractalTasks.recommended.map(({ id, name, scale }) => (
-              <li key={id} className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Checkbox id={id} checked={taskCompletion[id]} onCheckedChange={() => handleTaskToggle(id)} />
-                  <label htmlFor={id} className="text-muted-foreground cursor-pointer">{name}</label>
-                </div>
-                <Badge variant="secondary">{scale}</Badge>
-              </li>
-            ))}
+          <ul className="space-y-2">
+            {fractalTasks.recommended.map(({ id, name, scale }) => {
+                const isCompleted = taskCompletion[id] || false;
+                return (
+                  <li key={id} className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
+                      <label htmlFor={id} className={`text-sm cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{name}</label>
+                    </div>
+                    <Badge variant="secondary">{scale}</Badge>
+                  </li>
+                );
+            })}
           </ul>
         </div>
         <Separator />
@@ -110,13 +141,16 @@ const FractalsCard = () => {
             <List className="h-4 w-4" />
             Daily Tiers
           </h4>
-          <ul className="space-y-2 text-sm">
-            {fractalTasks.dailies.map(({ id, name }) => (
-               <li key={id} className="flex items-center gap-2">
-                  <Checkbox id={id} checked={taskCompletion[id]} onCheckedChange={() => handleTaskToggle(id)} />
-                  <label htmlFor={id} className="text-muted-foreground cursor-pointer">{name}</label>
-              </li>
-            ))}
+          <ul className="space-y-2">
+            {fractalTasks.dailies.map(({ id, name }) => {
+                const isCompleted = taskCompletion[id] || false;
+                return (
+                   <li key={id} className="flex items-center gap-2">
+                      <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
+                      <label htmlFor={id} className={`text-sm cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{name}</label>
+                  </li>
+                );
+            })}
           </ul>
         </div>
       </div>

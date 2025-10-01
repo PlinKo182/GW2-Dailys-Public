@@ -62,13 +62,21 @@ const ChallengeModeCard = () => {
                 </TooltipProvider>
             </CardHeader>
             <CardContent>
-                <ul className="space-y-2 text-sm">
-                    {FRACTAL_CMS.map(({ id, name }) => (
-                        <li key={id} className="flex items-center gap-2">
-                            <Checkbox id={id} checked={taskCompletion[id]} onCheckedChange={() => handleTaskToggle(id)} />
-                            <label htmlFor={id} className="text-muted-foreground cursor-pointer">{name}</label>
-                        </li>
-                    ))}
+                <ul className="space-y-2">
+                    {FRACTAL_CMS.map(({ id, name }) => {
+                        const isCompleted = taskCompletion[id] || false;
+                        return (
+                            <li key={id} className="flex items-center gap-2">
+                                <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
+                                <label
+                                    htmlFor={id}
+                                    className={`text-sm cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
+                                >
+                                    {name}
+                                </label>
+                            </li>
+                        );
+                    })}
                 </ul>
             </CardContent>
         </Card>

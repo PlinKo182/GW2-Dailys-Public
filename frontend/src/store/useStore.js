@@ -144,7 +144,8 @@ const useStore = create((set, get) => ({
       const todayEntry = progress ? progress[today] : null;
 
       let finalCustomTasks = customTasks;
-      if (!customTasks || customTasks.length === 0) {
+      // Ensure that we create default tasks if none exist or if the data is invalid.
+      if (!Array.isArray(customTasks) || customTasks.length === 0) {
         finalCustomTasks = createDefaultTaskCards();
         // Save these default tasks to the backend for the new user
         saveCustomTasks(userName, finalCustomTasks);
@@ -157,13 +158,13 @@ const useStore = create((set, get) => ({
       set({
         currentUser: userName,
         userHistory: progress || {},
-        eventFilters: filters || {},
-        customTasks: finalCustomTasks || [],
+        eventFilters: filters || {}, // Ensure filters is an object
+        customTasks: finalCustomTasks || [], // Ensure customTasks is an array
         userData: {
-          taskCompletion: todayEntry?.dailyTasks || {}, // Backend's dailyTasks is now our taskCompletion
+          taskCompletion: todayEntry?.dailyTasks || {},
           completedEventTypes: todayEntry?.completedEventTypes || {},
         },
-        lastResetDate: currentUTCDate, // Update the reset date to prevent race condition
+        lastResetDate: currentUTCDate,
       });
       get()._saveState();
     } catch (error) {
