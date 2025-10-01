@@ -118,19 +118,21 @@ const FractalsCard = () => {
             <Award className="h-4 w-4" />
             Recommended
           </h4>
-          <ul className="space-y-2">
+          <div className="space-y-2">
             {fractalTasks.recommended.map(({ id, name, scale }) => {
                 const isCompleted = taskCompletion[id] || false;
                 return (
-                  <li key={id} className="flex items-center gap-2">
+                  <div key={id} className="flex items-center space-x-3">
                     <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
-                    <label htmlFor={id} className={`text-sm cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
-                      {scale} - {name}
-                    </label>
-                  </li>
+                    <div className="flex-1">
+                      <label htmlFor={id} className={`cursor-pointer transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>
+                        {scale} - {name}
+                      </label>
+                    </div>
+                  </div>
                 );
             })}
-          </ul>
+          </div>
         </div>
         <Separator />
         <div>
@@ -138,17 +140,19 @@ const FractalsCard = () => {
             <List className="h-4 w-4" />
             Daily Tiers
           </h4>
-          <ul className="space-y-2">
+          <div className="space-y-2">
             {fractalTasks.dailies.map(({ id, name }) => {
                 const isCompleted = taskCompletion[id] || false;
                 return (
-                   <li key={id} className="flex items-center gap-2">
+                   <div key={id} className="flex items-center space-x-3">
                       <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
-                      <label htmlFor={id} className={`text-sm cursor-pointer ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{name}</label>
-                  </li>
+                      <div className="flex-1">
+                        <label htmlFor={id} className={`cursor-pointer transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{name}</label>
+                      </div>
+                   </div>
                 );
             })}
-          </ul>
+          </div>
         </div>
       </div>
     );
