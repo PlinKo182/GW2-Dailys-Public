@@ -14,10 +14,16 @@ export const convertUTCTimeToLocal = (utcTimeString) => {
 };
 
 export const formatTime = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return '--:--';
+  }
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
 
 export const formatTimeWithSeconds = (date) => {
+  if (!date || !(date instanceof Date) || isNaN(date.getTime())) {
+    return '--:--:--';
+  }
   return date.toLocaleTimeString([], { 
     hour: '2-digit', 
     minute: '2-digit',
