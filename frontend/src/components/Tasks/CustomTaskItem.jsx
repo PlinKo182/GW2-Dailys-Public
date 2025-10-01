@@ -15,7 +15,7 @@ const CustomTaskItem = ({ task, isCompleted, onToggle, onUpdate, onDelete, onCop
       <div className="flex-1">
         <label
           htmlFor={`task-${task.id}`}
-          className={`cursor-pointer transition-colors ${isCompleted ? 'line-through text-muted-foreground' : 'text-muted-foreground'}`}
+          className={`cursor-pointer transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}
         >
           {task.name}
           {task.hasTimer && task.availability && (

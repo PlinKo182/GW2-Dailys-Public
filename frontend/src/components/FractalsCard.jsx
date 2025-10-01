@@ -31,10 +31,21 @@ const FractalsCard = () => {
       setLoading(true);
       setError(null);
       try {
-        const categoryResponse = await axios.get("https://api.guildwars2.com/v2/achievements/categories/88");
-        const achievementIds = categoryResponse.data.achievements;
+        // Fetch the list of today's daily achievements
+        const dailyResponse = await axios.get("https://api.guildwars2.com/v2/achievements/daily");
 
-        const achievementsResponse = await axios.get(`https://api.guildwars2.com/v2/achievements?ids=${achievementIds.join(',')}`);
+        // Ensure the fractals property exists and is an array
+        const fractalAchievements = dailyResponse.data.fractals;
+        if (!Array.isArray(fractalAchievements) || fractalAchievements.length === 0) {
+          setFractalTasks({ recommended: [], dailies: [] });
+          setLoading(false);
+          return;
+        }
+
+        const fractalAchievementIds = fractalAchievements.map(f => f.id);
+
+        // Fetch the details for each of those achievements
+        const achievementsResponse = await axios.get(`https://api.guildwars2.com/v2/achievements?ids=${fractalAchievementIds.join(',')}`);
         const achievements = achievementsResponse.data;
 
         const recommendedFractals = new Map();
@@ -47,24 +58,28 @@ const FractalsCard = () => {
           if (ach.name.includes("Recommended")) {
             if (scale) {
               const fractalName = scaleToFractal[scale] || `Scale ${scale}`;
+              // For recommended, we store scale and name separately to keep the badge UI
               recommendedFractals.set(scale, fractalName);
             }
           } else if (["Tier 1", "Tier 2", "Tier 3", "Tier 4"].some(tier => ach.name.includes(tier))) {
             if (scale) {
               const fractalName = scaleToFractal[scale] || `Unknown Fractal`;
+              // For daily tiers, we create the combined name string
               dailyFractals.add(`${scale} - ${fractalName}`);
             } else {
-              // Fallback for generic dailies like "Complete a Tier 4 fractal"
+              // Fallback for generic dailies
               dailyFractals.add(ach.name);
             }
           }
         });
 
         // Generate stable IDs and update the global store
+        // Recommended fractals keep their structure for the badge display
         const sortedRecommended = Array.from(recommendedFractals.entries())
           .sort(([scaleA], [scaleB]) => scaleA - scaleB)
           .map(([scale, name]) => ({ id: `fractal_rec_${scale}`, name, scale }));
 
+        // Daily tiers have the pre-formatted name
         const sortedDailies = Array.from(dailyFractals).sort((a, b) => {
             const scaleA = parseInt(a.split(' ')[0], 10);
             const scaleB = parseInt(b.split(' ')[0], 10);
@@ -81,7 +96,8 @@ const FractalsCard = () => {
           dailies: sortedDailies,
         });
       } catch (err) {
-        setError("Failed to fetch daily fractals. The API might be down.");
+        console.error("Error fetching daily fractals:", err);
+        setError("Failed to fetch daily fractals. The API might be down or returned an unexpected response.");
       } finally {
         setLoading(false);
       }
