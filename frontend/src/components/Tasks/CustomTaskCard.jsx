@@ -15,40 +15,43 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
       </CardHeader>
       <CardContent>
         <div className="space-y-2 text-sm">
-          {card.tasks.map(task => (
-            <div key={task.id} className="flex items-center space-x-3">
-              <Checkbox
-                id={task.id}
-                checked={taskCompletion[task.id] || false}
-                onCheckedChange={() => onTaskToggle(task.id)}
-              />
-              <div className="flex-1">
-                <label
-                  htmlFor={task.id}
-                  className={`cursor-pointer transition-colors ${taskCompletion[task.id] ? "line-through text-muted-foreground" : ""}`}
-                >
-                  {task.name}
-                  {task.hasTimer && task.availability && (
-                    <TaskTimer
-                      availability={task.availability}
-                      currentTime={currentTime}
-                      inline
-                    />
-                  )}
-                </label>
+          {card.tasks.map(task => {
+            const isCompleted = !!taskCompletion[task.id];
+            return (
+              <div key={task.id} className="flex items-center space-x-3">
+                <Checkbox
+                  id={task.id}
+                  checked={isCompleted}
+                  onCheckedChange={() => onTaskToggle(task.id)}
+                />
+                <div className="flex-1">
+                  <label
+                    htmlFor={task.id}
+                    className={`cursor-pointer transition-colors ${isCompleted ? "line-through text-muted-foreground" : ""}`}
+                  >
+                    {task.name}
+                    {task.hasTimer && task.availability && (
+                      <TaskTimer
+                        availability={task.availability}
+                        currentTime={currentTime}
+                        inline
+                      />
+                    )}
+                  </label>
+                </div>
+                {task.waypoint && (
+                  <button
+                    onClick={() => onCopyWaypoint(task.waypoint)}
+                    aria-label={`Copy waypoint for ${task.name}`}
+                    className="text-green-600 hover:underline text-sm font-mono transition-colors duration-150"
+                    title="Click to copy waypoint"
+                  >
+                    {task.waypoint}
+                  </button>
+                )}
               </div>
-              {task.waypoint && (
-                <button
-                  onClick={() => onCopyWaypoint(task.waypoint)}
-                  aria-label={`Copy waypoint for ${task.name}`}
-                  className="text-green-600 hover:underline text-sm font-mono transition-colors duration-150"
-                  title="Click to copy waypoint"  
-                >
-                  {task.waypoint}
-                </button>
-              )}
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

@@ -118,7 +118,7 @@ const FractalsCard = () => {
             <Award className="h-4 w-4" />
             Recommended
           </h4>
-          <div className="space-y-2">
+          <div className="space-y-2 text-sm">
             {fractalTasks.recommended.map(({ id, name, scale }) => {
                 const isCompleted = taskCompletion[id] || false;
                 return (
@@ -140,7 +140,7 @@ const FractalsCard = () => {
             <List className="h-4 w-4" />
             Daily Tiers
           </h4>
-          <div className="space-y-2">
+          <div className="space-y-2 text-sm">
             {fractalTasks.dailies.map(({ id, name }) => {
                 const isCompleted = taskCompletion[id] || false;
                 return (

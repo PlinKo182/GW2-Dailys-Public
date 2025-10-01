@@ -17,7 +17,7 @@ const FRACTAL_CMS = [
     { name: "Silent Surf", id: "fractal_cm_silent_surf" },
     { name: "Lonely Tower", id: "fractal_cm_lonely_tower" },
     { name: "Kinfall", id: "fractal_cm_kinfall" },
-].map(cm => ({ ...cm, name: `${cm.name} (CM)` }));
+].map(cm => ({ ...cm, name: `${cm.name}` }));
 
 const CM_TASK_IDS = FRACTAL_CMS.map(cm => cm.id);
 
@@ -51,7 +51,7 @@ const ChallengeModeCard = () => {
                             >
                                 <div className="flex items-center gap-2">
                                     <Swords className="h-5 w-5" />
-                                    Challenge Modes
+                                    Challenge Mote
                                 </div>
                             </CardTitle>
                         </TooltipTrigger>
