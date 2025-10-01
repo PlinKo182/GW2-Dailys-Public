@@ -4,12 +4,6 @@ import { eventsData } from '../utils/eventsData';
 import { tasksData } from '../utils/tasksData';
 import { v4 as uuidv4 } from 'uuid';
 
-const defaultTasks = {
-  gathering: { vine_bridge: false, prosperity: false, destinys_gorge: false },
-  crafting: { mithrillium: false, elonian_cord: false, spirit_residue: false, gossamer: false },
-  specials: { psna: false, home_instance: false },
-};
-
 const SYNC_DEBOUNCE = 800;
 const FILTER_SYNC_DEBOUNCE = 1000;
 const TASKS_SYNC_DEBOUNCE = 1500;
@@ -17,10 +11,10 @@ let syncTimer = null;
 let filterSyncTimer = null;
 let tasksSyncTimer = null;
 
-// Helper to create default tasks for new users
+// Helper to create default cards for new users
 const createDefaultTaskCards = () => {
     const mapTasks = (tasks) => tasks.map(task => ({
-        id: task.id, // Use the old string ID for mapping completion
+        id: task.id,
         name: task.name,
         waypoint: task.waypoint || '',
         hasTimer: !!task.availability,
@@ -28,84 +22,57 @@ const createDefaultTaskCards = () => {
     }));
 
     return [
-        { id: uuidv4(), title: 'Daily Gathering', tasks: mapTasks(tasksData.gatheringTasks) },
-        { id: uuidv4(), title: 'Daily Crafting', tasks: mapTasks(tasksData.craftingTasks) },
-        { id: uuidv4(), title: 'Daily Specials', tasks: mapTasks(tasksData.specialTasks) },
+        // Official cards
+        { id: uuidv4(), type: 'pact_supply', title: 'Pact Supply Network' },
+        { id: uuidv4(), type: 'fractals', title: 'Daily Fractals' },
+        { id: uuidv4(), type: 'strikes', title: 'Daily Strikes' },
+        { id: uuidv4(), type: 'cms', title: 'Fractal CMs' },
+        // Custom cards
+        { id: uuidv4(), type: 'custom', title: 'Daily Gathering', tasks: mapTasks(tasksData.gatheringTasks) },
+        { id: uuidv4(), type: 'custom', title: 'Daily Crafting', tasks: mapTasks(tasksData.craftingTasks) },
+        { id: uuidv4(), type: 'custom', title: 'Daily Specials', tasks: mapTasks(tasksData.specialTasks) },
     ];
 };
 
 const useStore = create((set, get) => ({
-  // --- NEW, SIMPLIFIED STATE ---
+  // --- REFACTORED STATE ---
   currentUser: null,
-  customTasks: [], // The user's list of custom task cards
-  userData: { // For today's progress
-    taskCompletion: {}, // Replaces dailyTasks with a flat map of { taskId: boolean }
+  cards: [], // This is the single source of truth for all dashboard cards
+  userData: {
+    taskCompletion: {},
     completedEventTypes: {},
   },
-  userHistory: {}, // For all historical progress data
-  eventFilters: {}, // For user-specific event filters
+  userHistory: {},
+  eventFilters: {},
   notification: null,
   lastResetDate: 0,
-  showOfficialDailies: false,
-  showPactSupply: true,
-  showDailyStrikes: true,
-  toggleDailyStrikes: () => set(state => ({ showDailyStrikes: !state.showDailyStrikes })),
+
+  // State for API-fetched data that cards might need
   strikesTasks: [],
-  setStrikesTasks: (tasks) => set({ strikesTasks: tasks }),
-  showFractals: true,
-  showChallengeModes: true,
   fractalTasks: { recommended: [], dailies: [], cms: [] },
 
   // --- ACTIONS ---
 
   _saveState: () => {
-    const { currentUser, lastResetDate, showOfficialDailies, showPactSupply, showFractals, showChallengeModes } = get();
-    // Save app-level data like session and UI preferences
-    localStorageAPI.saveAppData({ currentUser, lastResetDate, showOfficialDailies, showPactSupply, showFractals, showChallengeModes });
+    const { currentUser, lastResetDate } = get();
+    // Save only essential app-level data
+    localStorageAPI.saveAppData({ currentUser, lastResetDate });
   },
 
   loadInitialData: () => {
     const appData = localStorageAPI.getAppData();
-    if (appData) {
-        // Set UI preferences immediately
-        set({
-          showOfficialDailies: appData.showOfficialDailies === true,
-          showPactSupply: appData.showPactSupply !== false,
-          showFractals: appData.showFractals !== false,
-          showChallengeModes: appData.showChallengeModes !== false,
-        });
-
-        // If a user session exists, log them in
-        if (appData.currentUser) {
-            set({ currentUser: appData.currentUser, lastResetDate: appData.lastResetDate });
-            get().loginUser(appData.currentUser);
-        }
+    if (appData && appData.currentUser) {
+        set({ currentUser: appData.currentUser, lastResetDate: appData.lastResetDate });
+        get().loginUser(appData.currentUser);
     }
-  },
-
-  // Action to toggle the visibility of the official dailies section
-  toggleOfficialDailies: () => {
-    set(state => ({ showOfficialDailies: !state.showOfficialDailies }));
-    get()._saveState(); // Persist the change
-  },
-
-  togglePactSupply: () => {
-    set(state => ({ showPactSupply: !state.showPactSupply }));
-    get()._saveState();
-  },
-  toggleFractals: () => {
-    set(state => ({ showFractals: !state.showFractals }));
-    get()._saveState();
-  },
-  toggleChallengeModes: () => {
-    set(state => ({ showChallengeModes: !state.showChallengeModes }));
-    get()._saveState();
   },
 
   // Action to update the fractal tasks in the store
   setFractalTasks: (tasks) => {
     set({ fractalTasks: tasks });
   },
+
+  setStrikesTasks: (tasks) => set({ strikesTasks: tasks }),
 
   _scheduleSync: () => {
     clearTimeout(syncTimer);
@@ -117,7 +84,6 @@ const useStore = create((set, get) => ({
       const payload = {
         userName: currentUser,
         date: today,
-        // The backend expects the completion map under the key 'dailyTasks'
         dailyTasks: userData.taskCompletion,
         completedEventTypes: userData.completedEventTypes || {},
       };
@@ -129,13 +95,10 @@ const useStore = create((set, get) => ({
   addUser: async (userName) => {
     try {
       await createUser(userName);
-      // After creating the user, immediately log them in to fetch their (empty) data
       await get().loginUser(userName);
       get().setNotification({ type: 'success', message: `User ${userName} created!` });
       setTimeout(() => get().setNotification(null), 4000);
     } catch (error) {
-      // The loginUser action will handle its own error notifications if it fails
-      // But we still throw the error for the component to handle loading state
       throw error;
     }
   },
@@ -143,27 +106,25 @@ const useStore = create((set, get) => ({
   // Logs in an existing user
   loginUser: async (userName) => {
     try {
-      const { progress, filters, customTasks } = await fetchProgress(userName);
+      // The backend returns `customTasks`. We alias it to `cards`.
+      const { progress, filters, customTasks: cards } = await fetchProgress(userName);
       const today = new Date().toISOString().slice(0, 10);
       const todayEntry = progress ? progress[today] : null;
 
-      let finalCustomTasks = customTasks;
-      // Ensure that we create default tasks if none exist or if the data is invalid.
-      if (!Array.isArray(customTasks) || customTasks.length === 0) {
-        finalCustomTasks = createDefaultTaskCards();
-        // Save these default tasks to the backend for the new user
-        saveCustomTasks(userName, finalCustomTasks);
+      let finalCards = cards;
+      if (!Array.isArray(cards) || cards.length === 0) {
+        finalCards = createDefaultTaskCards();
+        saveCustomTasks(userName, finalCards);
       }
 
-      // Get the current UTC date to prevent the daily reset from firing incorrectly
       const now = new Date();
       const currentUTCDate = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 
       set({
         currentUser: userName,
         userHistory: progress || {},
-        eventFilters: filters || {}, // Ensure filters is an object
-        customTasks: finalCustomTasks || [], // Ensure customTasks is an array
+        eventFilters: filters || {},
+        cards: finalCards || [],
         userData: {
           taskCompletion: todayEntry?.dailyTasks || {},
           completedEventTypes: todayEntry?.completedEventTypes || {},
@@ -190,48 +151,68 @@ const useStore = create((set, get) => ({
     }, FILTER_SYNC_DEBOUNCE);
   },
 
-  setCustomTasks: (newTasks) => {
+  setCards: (newCards) => {
     const { currentUser } = get();
-    if (!currentUser) return;
+    set({ cards: newCards });
 
-    set({ customTasks: newTasks });
+    if (!currentUser) return; // Don't save if no user is logged in
 
     clearTimeout(tasksSyncTimer);
     tasksSyncTimer = setTimeout(() => {
-      saveCustomTasks(currentUser, newTasks);
+      saveCustomTasks(currentUser, newCards);
     }, TASKS_SYNC_DEBOUNCE);
   },
 
-  // --- Actions for managing custom tasks ---
-  addCard: (title) => {
-    const newCard = { id: uuidv4(), title: title || 'New Card', tasks: [] };
-    const newTasks = [...get().customTasks, newCard];
-    get().setCustomTasks(newTasks);
+  // --- Actions for managing cards and tasks ---
+  addCard: (type, title = 'New Custom Card') => {
+    let newCard;
+    switch (type) {
+        case 'pact_supply': newCard = { id: uuidv4(), type: 'pact_supply', title: 'Pact Supply Network' }; break;
+        case 'fractals': newCard = { id: uuidv4(), type: 'fractals', title: 'Daily Fractals' }; break;
+        case 'strikes': newCard = { id: uuidv4(), type: 'strikes', title: 'Daily Strikes' }; break;
+        case 'cms': newCard = { id: uuidv4(), type: 'cms', title: 'Fractal CMs' }; break;
+        default: newCard = { id: uuidv4(), type: 'custom', title, tasks: [] };
+    }
+    const newCards = [...get().cards, newCard];
+    get().setCards(newCards);
+  },
+
+  moveCard: (activeId, overId) => {
+    const oldCards = get().cards;
+    const activeIndex = oldCards.findIndex((card) => card.id === activeId);
+    const overIndex = oldCards.findIndex((card) => card.id === overId);
+
+    if (activeIndex !== -1 && overIndex !== -1) {
+      const newCards = [...oldCards];
+      const [movedCard] = newCards.splice(activeIndex, 1);
+      newCards.splice(overIndex, 0, movedCard);
+      get().setCards(newCards);
+    }
   },
 
   updateCardTitle: (cardId, newTitle) => {
-    const newTasks = get().customTasks.map(card =>
+    const newCards = get().cards.map(card =>
       card.id === cardId ? { ...card, title: newTitle } : card
     );
-    get().setCustomTasks(newTasks);
+    get().setCards(newCards);
   },
 
   deleteCard: (cardId) => {
-    const newTasks = get().customTasks.filter(card => card.id !== cardId);
-    get().setCustomTasks(newTasks);
+    const newCards = get().cards.filter(card => card.id !== cardId);
+    get().setCards(newCards);
   },
 
   addTask: (cardId, taskName) => {
     const newTask = { id: uuidv4(), name: taskName, waypoint: '', hasTimer: false };
-    const newTasks = get().customTasks.map(card =>
-      card.id === cardId ? { ...card, tasks: [...card.tasks, newTask] } : card
+    const newCards = get().cards.map(card =>
+      card.id === cardId && card.type === 'custom' ? { ...card, tasks: [...card.tasks, newTask] } : card
     );
-    get().setCustomTasks(newTasks);
+    get().setCards(newCards);
   },
 
   updateTask: (cardId, taskId, updatedTask) => {
-    const newTasks = get().customTasks.map(card => {
-      if (card.id === cardId) {
+    const newCards = get().cards.map(card => {
+      if (card.id === cardId && card.tasks) {
         const updatedTasks = card.tasks.map(task =>
           task.id === taskId ? { ...task, ...updatedTask } : task
         );
@@ -239,26 +220,26 @@ const useStore = create((set, get) => ({
       }
       return card;
     });
-    get().setCustomTasks(newTasks);
+    get().setCards(newCards);
   },
 
   deleteTask: (cardId, taskId) => {
-    const newTasks = get().customTasks.map(card => {
-      if (card.id === cardId) {
+    const newCards = get().cards.map(card => {
+      if (card.id === cardId && card.tasks) {
         const filteredTasks = card.tasks.filter(task => task.id !== taskId);
         return { ...card, tasks: filteredTasks };
       }
       return card;
     });
-    get().setCustomTasks(newTasks);
+    get().setCards(newCards);
   },
 
   logout: () => {
     localStorageAPI.clearAppData();
     set({
         currentUser: null,
-        customTasks: [],
-        userData: { dailyTasks: defaultTasks, completedEventTypes: {} },
+        cards: [],
+        userData: { taskCompletion: {}, completedEventTypes: {} },
         userHistory: {},
         eventFilters: {}
     });
@@ -279,7 +260,6 @@ const useStore = create((set, get) => ({
       if (!newUserHistory[today]) {
         newUserHistory[today] = { dailyTasks: {}, completedEventTypes: state.userData.completedEventTypes };
       }
-      // The backend expects this field to be named 'dailyTasks'
       newUserHistory[today].dailyTasks = newTaskCompletion;
 
       return {
@@ -300,7 +280,6 @@ const useStore = create((set, get) => ({
         const today = new Date().toISOString().slice(0, 10);
         const newCompletedEventTypes = { ...(state.userData.completedEventTypes || {}) };
 
-        // This logic seems overly complex, but we'll retain it for now.
         const getFullEventPath = (key) => {
           for (const [expansion, expansionData] of Object.entries(eventsData)) {
             for (const [zone, zoneData] of Object.entries(expansionData)) {
@@ -333,7 +312,7 @@ const useStore = create((set, get) => ({
 
         const newUserHistory = { ...state.userHistory };
         if (!newUserHistory[today]) {
-          newUserHistory[today] = { dailyTasks: state.userData.dailyTasks, completedEventTypes: {} };
+          newUserHistory[today] = { dailyTasks: state.userData.taskCompletion, completedEventTypes: {} };
         }
         newUserHistory[today].completedEventTypes = newCompletedEventTypes;
         
@@ -357,12 +336,12 @@ const useStore = create((set, get) => ({
     if (currentUTCDate !== get().lastResetDate) {
       set({
         userData: {
-            dailyTasks: defaultTasks,
+            taskCompletion: {}, // Reset to empty object
             completedEventTypes: {},
         },
         lastResetDate: currentUTCDate
       });
-      get()._saveState(); // Save the new reset date
+      get()._saveState();
     }
   },
 }));
