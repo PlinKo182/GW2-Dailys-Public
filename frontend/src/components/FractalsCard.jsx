@@ -31,65 +31,63 @@ const FractalsCard = () => {
       setLoading(true);
       setError(null);
       try {
-        // Fetch the list of today's daily achievements
-        const dailyResponse = await axios.get("https://api.guildwars2.com/v2/achievements/daily");
-
-        // Ensure the fractals property exists and is an array
-        const fractalAchievements = dailyResponse.data.fractals;
-        if (!Array.isArray(fractalAchievements) || fractalAchievements.length === 0) {
+        // Fetch daily fractals from category 88
+        const categoryResponse = await axios.get("https://api.guildwars2.com/v2/achievements/categories/88");
+        
+        if (!categoryResponse.data?.achievements) {
           setFractalTasks({ recommended: [], dailies: [] });
           setLoading(false);
           return;
         }
 
-        const fractalAchievementIds = fractalAchievements.map(f => f.id);
-
-        // Fetch the details for each of those achievements
-        const achievementsResponse = await axios.get(`https://api.guildwars2.com/v2/achievements?ids=${fractalAchievementIds.join(',')}`);
+        // Fetch the details for each achievement in the category
+        const achievementIds = categoryResponse.data.achievements;
+        const achievementsResponse = await axios.get(`https://api.guildwars2.com/v2/achievements?ids=${achievementIds.join(',')}`);
         const achievements = achievementsResponse.data;
 
-        const recommendedFractals = new Map();
+        const recommendedFractals = new Set();
         const dailyFractals = new Set();
 
         achievements.forEach(ach => {
-          const scaleMatch = ach.name.match(/Scale (\d+)/);
-          const scale = scaleMatch ? parseInt(scaleMatch[1], 10) : null;
-
-          if (ach.name.includes("Recommended")) {
-            if (scale) {
+          const name = ach.name;
+          
+          // Process recommended fractals
+          if (name.includes("Recommended")) {
+            try {
+              const scale = parseInt(name.split("Scale ")[1], 10);
               const fractalName = scaleToFractal[scale] || `Scale ${scale}`;
-              // For recommended, we store scale and name separately to keep the badge UI
-              recommendedFractals.set(scale, fractalName);
+              recommendedFractals.add([scale, fractalName]);
+            } catch (e) {
+              console.warn("Could not parse recommended fractal scale:", name);
             }
-          } else if (["Tier 1", "Tier 2", "Tier 3", "Tier 4"].some(tier => ach.name.includes(tier))) {
-            if (scale) {
-              const fractalName = scaleToFractal[scale] || `Unknown Fractal`;
-              // For daily tiers, we create the combined name string
-              dailyFractals.add(`${scale} - ${fractalName}`);
-            } else {
-              // Fallback for generic dailies
-              dailyFractals.add(ach.name);
-            }
+          } 
+          // Process daily tier fractals
+          else if (["Tier 1", "Tier 2", "Tier 3", "Tier 4"].some(tier => name.includes(tier))) {
+            // Clean up the name by removing tier prefixes
+            let fractalName = name;
+            ["Daily Tier 1 ", "Daily Tier 2 ", "Daily Tier 3 ", "Daily Tier 4 ", "Fractal"].forEach(prefix => {
+              fractalName = fractalName.replace(prefix, "");
+            });
+            dailyFractals.add(fractalName.trim());
           }
         });
 
-        // Generate stable IDs and update the global store
-        // Recommended fractals keep their structure for the badge display
-        const sortedRecommended = Array.from(recommendedFractals.entries())
+        // Sort and format recommended fractals
+        const sortedRecommended = Array.from(recommendedFractals)
           .sort(([scaleA], [scaleB]) => scaleA - scaleB)
-          .map(([scale, name]) => ({ id: `fractal_rec_${scale}`, name, scale }));
+          .map(([scale, name]) => ({
+            id: `fractal_rec_${scale}`,
+            name,
+            scale
+          }));
 
-        // Daily tiers have the pre-formatted name
-        const sortedDailies = Array.from(dailyFractals).sort((a, b) => {
-            const scaleA = parseInt(a.split(' ')[0], 10);
-            const scaleB = parseInt(b.split(' ')[0], 10);
-
-            if (isNaN(scaleA) && isNaN(scaleB)) return a.localeCompare(b);
-            if (isNaN(scaleA)) return 1;
-            if (isNaN(scaleB)) return -1;
-
-            return scaleA - scaleB;
-          }).map(name => ({ id: `fractal_daily_${name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`, name }));
+        // Sort and format daily fractals
+        const sortedDailies = Array.from(dailyFractals)
+          .sort()
+          .map(name => ({
+            id: `fractal_daily_${name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+            name
+          }));
 
         setFractalTasks({
           recommended: sortedRecommended,
