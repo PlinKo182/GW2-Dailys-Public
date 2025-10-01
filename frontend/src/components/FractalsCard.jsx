@@ -144,10 +144,10 @@ const FractalsCard = () => {
             {fractalTasks.dailies.map(({ id, name }) => {
                 const isCompleted = taskCompletion[id] || false;
                 return (
-                   <div key={id} className="flex min-h-[1.75rem] items-center space-x-3">
+                   <div key={id} className="flex min-h-[1.5rem] items-center space-x-3">
                       <Checkbox id={id} checked={isCompleted} onCheckedChange={() => handleTaskToggle(id)} />
                       <div className="flex-1">
-                        <label htmlFor={id} className={`cursor-pointer leading-normal transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{name}</label>
+                        <label htmlFor={id} className={`cursor-pointer leading-tight flex items-center gap-2 transition-colors ${isCompleted ? 'line-through text-muted-foreground' : ''}`}>{name}</label>
                       </div>
                    </div>
                 );
