@@ -43,4 +43,31 @@ module.exports = {
       return webpackConfig;
     },
   },
+  devServer: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: true,
+      },
+    },
+  },
+  jest: {
+    configure: (jestConfig) => {
+      // Explicitly ignore node_modules to prevent Jest from scanning it for tests
+      jestConfig.testPathIgnorePatterns = [
+        ...(jestConfig.testPathIgnorePatterns || []),
+        '/node_modules/',
+      ];
+
+      // Explicitly set the test match pattern to only look inside the src directory
+      jestConfig.testMatch = [
+        '<rootDir>/src/**/?(*.)+(spec|test).[jt]s?(x)'
+      ];
+
+      // Disable coverage collection during normal test runs to speed things up
+      jestConfig.collectCoverage = false;
+
+      return jestConfig;
+    },
+  },
 };

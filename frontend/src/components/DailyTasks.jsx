@@ -13,6 +13,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+
 const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, currentTime, isEditMode }) => {
   const { addTask, updateTask, deleteTask, updateCardTitle, deleteCard } = useStore();
   const [isEditingTitle, setIsEditingTitle] = useState(false);
@@ -20,9 +29,12 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState(null);
 
-  const taskIds = card.tasks.map(t => t.id);
-  const completedTasks = taskIds.filter(id => taskCompletion[id]);
-  const areAllTasksCompleted = taskIds.length > 0 && completedTasks.length === taskIds.length;
+  // Safely access tasks, defaulting to an empty array if undefined
+  const tasks = card.tasks || [];
+  const taskIds = tasks.map(t => t.id);
+  const completedCount = taskIds.filter(id => taskCompletion[id]).length;
+  const totalTasks = taskIds.length;
+  const areAllTasksCompleted = totalTasks > 0 && completedCount === totalTasks;
 
   const handleToggleAllTasks = () => {
     if (isEditMode) return;
@@ -57,25 +69,32 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
-        {isEditMode && isEditingTitle ? (
-          <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
-        ) : (
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger>
-                <CardTitle
-                  onClick={handleToggleAllTasks}
-                  className={`${!isEditMode ? 'cursor-pointer hover:underline' : ''} ${areAllTasksCompleted ? 'line-through text-muted-foreground' : ''}`}
-                >
-                  {card.title}
-                </CardTitle>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Click to toggle all tasks</p>
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
+        <div className="flex items-center">
+          {isEditMode && isEditingTitle ? (
+            <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold"/>
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <CardTitle
+                    onClick={handleToggleAllTasks}
+                    className={`${!isEditMode ? 'cursor-pointer hover:underline' : ''} ${areAllTasksCompleted ? 'line-through text-muted-foreground' : ''}`}
+                  >
+                    {card.title}
+                  </CardTitle>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Click to toggle all tasks</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {totalTasks > 0 && !isEditingTitle && (
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({completedCount}/{totalTasks})
+            </span>
+          )}
+        </div>
         {isEditMode && (
           <div className="flex items-center space-x-1">
             <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
@@ -85,7 +104,7 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
       </CardHeader>
       <CardContent className="py-2">
         <div className="space-y-1">
-          {card.tasks.map(task => (
+          {tasks.map(task => (
             <CustomTaskItem
               key={task.id}
               task={task}
@@ -112,40 +131,66 @@ import PactSupplyCard from './PactSupplyCard';
 import FractalsCard from './FractalsCard';
 import ChallengeModeCard from './ChallengeModeCard';
 import StrikesCard from './StrikesCard';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { ChevronDown, Package, Gem, Swords } from 'lucide-react';
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+const SortableCard = ({ card, children }) => {
+  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id: card.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+      {children}
+    </div>
+  );
+};
+
 
 const DailyTasks = ({ currentTime }) => {
   const [isEditMode, setIsEditMode] = useState(false);
-  const customTasks = useStore((state) => state.customTasks);
-  const addCard = useStore((state) => state.addCard);
-  const handleTaskToggle = useStore((state) => state.handleTaskToggle);
-  const taskCompletion = useStore((state) => state.userData.taskCompletion);
-  const {
-    showOfficialDailies, toggleOfficialDailies,
-    showPactSupply, togglePactSupply,
-    showFractals, toggleFractals,
-    showChallengeModes, toggleChallengeModes,
-    showDailyStrikes, toggleDailyStrikes
-  } = useStore((state) => ({
-    showOfficialDailies: state.showOfficialDailies,
-    toggleOfficialDailies: state.toggleOfficialDailies,
-    showPactSupply: state.showPactSupply,
-    togglePactSupply: state.togglePactSupply,
-    showFractals: state.showFractals,
-    toggleFractals: state.toggleFractals,
-    showChallengeModes: state.showChallengeModes,
-    toggleChallengeModes: state.toggleChallengeModes,
-    showDailyStrikes: state.showDailyStrikes,
-    toggleDailyStrikes: state.toggleDailyStrikes,
+  const { cards, addCard, moveCard, handleTaskToggle, userData } = useStore(state => ({
+    cards: state.cards,
+    addCard: state.addCard,
+    moveCard: state.moveCard,
+    handleTaskToggle: state.handleTaskToggle,
+    userData: state.userData,
   }));
+  const taskCompletion = userData.taskCompletion;
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
+
+  const handleDragEnd = (event) => {
+    const { active, over } = event;
+    if (active.id !== over.id) {
+      const oldIndex = cards.findIndex(c => c.id === active.id);
+      const newIndex = cards.findIndex(c => c.id === over.id);
+      moveCard(oldIndex, newIndex);
+    }
+  };
 
   const copyToClipboard = useCallback((text) => {
     if (!text) return;
     navigator.clipboard.writeText(text.trim());
   }, []);
+
+  // Map card types to their components for dynamic rendering
+  const cardComponentMap = {
+    custom: CustomTaskCard,
+    pact_supply: PactSupplyCard,
+    fractals: FractalsCard,
+    cms: ChallengeModeCard,
+    strikes: StrikesCard,
+  };
 
   return (
     <div>
@@ -155,63 +200,47 @@ const DailyTasks = ({ currentTime }) => {
         </Button>
       </div>
 
-      <Collapsible open={showOfficialDailies} onOpenChange={toggleOfficialDailies} className="mb-6 border-b pb-4">
-        <CollapsibleTrigger asChild>
-          <Button variant="ghost" className="w-full justify-start px-2 text-lg font-semibold">
-            <ChevronDown className={`h-5 w-5 mr-2 transition-transform ${showOfficialDailies ? 'rotate-180' : ''}`} />
-            Official Dailies
-            <span className="flex items-center gap-2 ml-2 text-muted-foreground">
-              <Package className="h-4 w-4" />
-              <Gem className="h-4 w-4" />
-              <Swords className="h-4 w-4" />
-            </span>
-          </Button>
-        </CollapsibleTrigger>
-        <CollapsibleContent>
-          <div className="flex items-center justify-end space-x-4 pt-4">
-            <div className="flex items-center space-x-2">
-              <Switch id="pact-supply-toggle" checked={showPactSupply} onCheckedChange={togglePactSupply} />
-              <Label htmlFor="pact-supply-toggle">Pact Supply</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="fractals-toggle" checked={showFractals} onCheckedChange={toggleFractals} />
-              <Label htmlFor="fractals-toggle">Fractals</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="cm-toggle" checked={showChallengeModes} onCheckedChange={toggleChallengeModes} />
-              <Label htmlFor="cm-toggle">CMs</Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Switch id="strikes-toggle" checked={showDailyStrikes} onCheckedChange={toggleDailyStrikes} />
-              <Label htmlFor="strikes-toggle">Strikes</Label>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 pt-4">
-            {showPactSupply && <PactSupplyCard currentTime={currentTime} />}
-            {showFractals && <FractalsCard />}
-            {showChallengeModes && <ChallengeModeCard />}
-            {showDailyStrikes && <StrikesCard />}
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <SortableContext items={cards.map(c => c.id)} strategy={() => {}}>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+            {cards.map(card => {
+              const CardComponent = cardComponentMap[card.type];
+              if (!CardComponent) return null;
 
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-        {/* Render all the user's custom task cards */}
-        {customTasks.map(card => (
-          <CustomTaskCard
-            key={card.id}
-            card={card}
-            taskCompletion={taskCompletion}
-            onTaskToggle={handleTaskToggle}
-            onCopyWaypoint={copyToClipboard}
-            currentTime={currentTime}
-            isEditMode={isEditMode}
-          />
-        ))}
-      </div>
+              return (
+                <SortableCard key={card.id} card={card}>
+                  <CardComponent
+                    card={card}
+                    taskCompletion={taskCompletion}
+                    onTaskToggle={handleTaskToggle}
+                    onCopyWaypoint={copyToClipboard}
+                    currentTime={currentTime}
+                    isEditMode={isEditMode}
+                  />
+                </SortableCard>
+              );
+            })}
+          </div>
+        </SortableContext>
+      </DndContext>
+
       {isEditMode && (
-        <div className="mt-6 text-center">
-          <Button onClick={() => addCard('New Daily Card')}><PlusCircleIcon className="h-5 w-5 mr-2" />Add New Card</Button>
+        <div className="mt-6 flex justify-center">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button><PlusCircleIcon className="h-5 w-5 mr-2" />Add Card</Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuLabel>Official Dailies</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => addCard('pact_supply')}>Pact Supply Network</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => addCard('fractals')}>Daily Fractals</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => addCard('strikes')}>Daily Strikes</DropdownMenuItem>
+              <DropdownMenuItem onSelect={() => addCard('cms')}>Fractal CMs</DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuLabel>Custom</DropdownMenuLabel>
+              <DropdownMenuItem onSelect={() => addCard('custom')}>New Custom Card</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
     </div>

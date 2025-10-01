@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Copy, Package } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Copy, Package, PencilIcon, TrashIcon } from 'lucide-react';
 import useStore from '../store/useStore';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
@@ -11,6 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
+// Constants remain the same as they define the content of this specific card type
 const PACT_AGENTS = ["Mehem the Traveled", "The Fox", "Specialist Yana", "Lady Derwena", "Despina Katelyn", "Verma Giftrender"];
 const VENDORS = {
   "Mehem the Traveled":   {0: "[&BIcHAAA=]", 1: "[&BH8HAAA=]", 2: "[&BH4HAAA=]", 3: "[&BKsHAAA=]", 4: "[&BJQHAAA=]", 5: "[&BH8HAAA=]", 6: "[&BIkHAAA=]"},
@@ -39,17 +41,19 @@ const getPsnaChatlinks = (now) => {
 
 const PACT_AGENT_TASKS = PACT_AGENTS.map(agent => ({
   name: agent,
-  id: `pact_supply_${agent.toLowerCase()}`
+  id: `pact_supply_${agent.toLowerCase().replace(/ /g, '_')}`
 }));
 const PACT_AGENT_TASK_IDS = PACT_AGENT_TASKS.map(task => task.id);
 
-const PactSupplyCard = ({ currentTime }) => {
+const PactSupplyCard = ({ card, currentTime, taskCompletion, onTaskToggle, isEditMode }) => {
   const [dailyLinks, setDailyLinks] = useState({});
-  const { setNotification, handleTaskToggle, taskCompletion } = useStore(state => ({
+  const { setNotification, updateCardTitle, deleteCard } = useStore(state => ({
     setNotification: state.setNotification,
-    handleTaskToggle: state.handleTaskToggle,
-    taskCompletion: state.userData.taskCompletion,
+    updateCardTitle: state.updateCardTitle,
+    deleteCard: state.deleteCard,
   }));
+  const [isEditingTitle, setIsEditingTitle] = useState(false);
+  const [title, setTitle] = useState(card.title);
 
   useEffect(() => {
     setDailyLinks(getPsnaChatlinks(currentTime));
@@ -68,40 +72,65 @@ const PactSupplyCard = ({ currentTime }) => {
     copyToClipboard(allLinks, true);
   };
 
-  const completedNpcTasks = PACT_AGENT_TASK_IDS.filter(id => taskCompletion[id]);
-  const isAllCompleted = completedNpcTasks.length === PACT_AGENT_TASK_IDS.length;
-  const isSomeCompleted = completedNpcTasks.length > 0 && !isAllCompleted;
+  const completedCount = PACT_AGENT_TASK_IDS.filter(id => taskCompletion[id]).length;
+  const totalTasks = PACT_AGENT_TASK_IDS.length;
+  const isAllCompleted = completedCount === totalTasks;
 
   const handleToggleAll = () => {
+    if (isEditMode) return;
     const newCompletionState = !isAllCompleted;
     PACT_AGENT_TASK_IDS.forEach(id => {
       if (!!taskCompletion[id] !== newCompletionState) {
-        handleTaskToggle(id, newCompletionState);
+        onTaskToggle(id);
       }
     });
   };
 
+  const handleTitleChange = (e) => setTitle(e.target.value);
+  const handleTitleBlur = () => {
+    setIsEditingTitle(false);
+    updateCardTitle(card.id, title);
+  };
+  const handleTitleKeyDown = (e) => e.key === 'Enter' && handleTitleBlur();
+
   return (
     <Card>
       <CardHeader className="flex-row items-center justify-between">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger>
-              <CardTitle
-                onClick={handleToggleAll}
-                className={`cursor-pointer hover:underline ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
-              >
-                <div className="flex items-center gap-2">
-                  <Package className="h-5 w-5" />
-                  Pact Supply Network Agent
-                </div>
-              </CardTitle>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>Click to toggle all tasks</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex items-center">
+          {isEditMode && isEditingTitle ? (
+            <Input value={title} onChange={handleTitleChange} onBlur={handleTitleBlur} onKeyDown={handleTitleKeyDown} autoFocus className="text-xl font-bold" />
+          ) : (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger>
+                  <CardTitle
+                    onClick={handleToggleAll}
+                    className={`cursor-pointer hover:underline ${isAllCompleted ? 'line-through text-muted-foreground' : ''}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Package className="h-5 w-5" />
+                      {card.title}
+                    </div>
+                  </CardTitle>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Click to toggle all tasks</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          {!isEditingTitle && (
+            <span className="ml-2 text-sm font-normal text-muted-foreground">
+              ({completedCount}/{totalTasks})
+            </span>
+          )}
+        </div>
+        {isEditMode && (
+          <div className="flex items-center space-x-1">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => setIsEditingTitle(true)} title="Edit title"><PencilIcon className="h-4 w-4" /></Button>
+            <Button variant="ghost" size="icon" className="h-6 w-6 text-destructive" onClick={() => deleteCard(card.id)} title="Delete card"><TrashIcon className="h-4 w-4" /></Button>
+          </div>
+        )}
       </CardHeader>
       <CardContent className="py-2">
         <div className="space-y-1 text-sm">
