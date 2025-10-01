@@ -39,7 +39,7 @@ export const fetchDailyFractals = async () => {
         const achievements = await achievementsResponse.json();
 
         const recommendedFractals = new Set();
-        const dailyFractals = new Set();
+        const dailyFractalsMap = new Map();
 
         // 3. Process each achievement
         achievements.forEach(ach => {
@@ -57,12 +57,31 @@ export const fetchDailyFractals = async () => {
             } 
             // Process daily tier fractals
             else if (["Tier 1", "Tier 2", "Tier 3", "Tier 4"].some(tier => name.includes(tier))) {
-                // Clean up the name by removing tier prefixes
-                let fractalName = name;
-                ["Daily Tier 1 ", "Daily Tier 2 ", "Daily Tier 3 ", "Daily Tier 4 ", "Fractal"].forEach(prefix => {
-                    fractalName = fractalName.replace(prefix, "");
-                });
-                dailyFractals.add(fractalName.trim());
+                // Extract scale from tier fractal names
+                try {
+                    let fractalName = name;
+                    ["Daily Tier 1 ", "Daily Tier 2 ", "Daily Tier 3 ", "Daily Tier 4 ", "Fractal"].forEach(prefix => {
+                        fractalName = fractalName.replace(prefix, "");
+                    });
+                    fractalName = fractalName.trim();
+                    
+                    // Find all scales for this fractal name
+                    const scales = [];
+                    for (let scale = 1; scale <= 100; scale++) {
+                        if (scaleToFractal[scale] === fractalName) {
+                            scales.push(scale);
+                        }
+                    }
+                    
+                    if (scales.length > 0) {
+                        if (!dailyFractalsMap.has(fractalName)) {
+                            dailyFractalsMap.set(fractalName, new Set());
+                        }
+                        scales.forEach(scale => dailyFractalsMap.get(fractalName).add(scale));
+                    }
+                } catch (e) {
+                    console.warn("Could not process daily tier fractal:", name);
+                }
             }
         });
 
@@ -75,13 +94,19 @@ export const fetchDailyFractals = async () => {
                 scale
             }));
 
-        // 5. Sort and format daily fractals
-        const sortedDailies = Array.from(dailyFractals)
-            .sort()
-            .map(name => ({
-                id: `fractal_daily_${name.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
-                name
-            }));
+        // 5. Sort and format daily fractals with scales
+        const sortedDailies = Array.from(dailyFractalsMap.entries())
+            .sort(([nameA], [nameB]) => nameA.localeCompare(nameB))
+            .map(([fractalName, scalesSet]) => {
+                const scales = Array.from(scalesSet).sort((a, b) => a - b);
+                const scalesText = scales.join(' | ');
+                return {
+                    id: `fractal_daily_${fractalName.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+                    name: `${scalesText} - ${fractalName}`,
+                    fractalName,
+                    scales
+                };
+            });
 
         return {
             recommended: sortedRecommended,
