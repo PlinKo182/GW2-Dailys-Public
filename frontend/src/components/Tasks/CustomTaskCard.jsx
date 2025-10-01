@@ -18,7 +18,7 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
           {card.tasks.map(task => {
             const isCompleted = !!taskCompletion[task.id];
             return (
-              <div key={task.id} className="flex min-h-[1.25rem] items-center space-x-3">
+              <div key={task.id} className="flex h-6 items-center space-x-3">
                 <Checkbox
                   id={task.id}
                   checked={isCompleted}

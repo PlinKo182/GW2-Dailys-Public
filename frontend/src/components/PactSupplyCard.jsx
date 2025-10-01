@@ -109,7 +109,7 @@ const PactSupplyCard = ({ currentTime }) => {
             const chatlink = dailyLinks[task.name];
             const isCompleted = !!taskCompletion[task.id];
             return (
-              <div key={task.id} className="flex min-h-[1.25rem] items-center space-x-3">
+              <div key={task.id} className="flex h-6 items-center space-x-3">
                 <Checkbox
                   id={task.id}
                   checked={isCompleted}

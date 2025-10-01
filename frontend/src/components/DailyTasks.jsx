@@ -84,7 +84,7 @@ const CustomTaskCard = ({ card, taskCompletion, onTaskToggle, onCopyWaypoint, cu
         )}
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className="space-y-2">
           {card.tasks.map(task => (
             <CustomTaskItem
               key={task.id}
