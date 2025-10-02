@@ -1,5 +1,5 @@
 // Scale to fractal mapping - complete 1-100 scale mapping
-const scale_to_fractal = {
+const scaleToFractal = {
     1: "Volcanic", 2: "Uncategorized", 3: "Snowblind", 4: "Urban Battleground",
     5: "Swampland", 6: "Cliffside", 7: "Aquatic Ruins", 8: "Underground Facility",
     9: "Molten Furnace", 10: "Molten Boss", 11: "Deepstone", 12: "Siren's Reef",
