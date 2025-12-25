@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { localStorageAPI, fetchProgress, saveProgress, createUser, saveUserFilters, saveCustomTasks } from '../services/api';
+import { localStorageAPI, fetchProgress, saveProgress, createUser, saveUserFilters, saveCustomTasks, saveGW2ApiKey, deleteGW2ApiKey } from '../services/api';
 import { eventsData } from '../utils/eventsData';
 import { tasksData } from '../utils/tasksData';
 import { v4 as uuidv4 } from 'uuid';
@@ -54,6 +54,11 @@ const useStore = create((set, get) => ({
   showFractals: true,
   showChallengeModes: true,
   fractalTasks: { recommended: [], dailies: [], cms: [] },
+
+  // GW2 API Key state
+  hasGW2ApiKey: false,
+  gw2AccountName: null,
+  gw2ApiKeyPermissions: [],
 
   // --- ACTIONS ---
 
@@ -135,7 +140,7 @@ const useStore = create((set, get) => ({
   // Logs in an existing user
   loginUser: async (userName) => {
     try {
-      const { progress, filters, customTasks } = await fetchProgress(userName);
+      const { progress, filters, customTasks, gw2AccountName, gw2ApiKeyPermissions } = await fetchProgress(userName);
       const today = new Date().toISOString().slice(0, 10);
       const todayEntry = progress ? progress[today] : null;
 
@@ -161,6 +166,10 @@ const useStore = create((set, get) => ({
           completedEventTypes: todayEntry?.completedEventTypes || {},
         },
         lastResetDate: currentUTCDate,
+        // GW2 API Key state from server
+        hasGW2ApiKey: !!gw2AccountName,
+        gw2AccountName: gw2AccountName || null,
+        gw2ApiKeyPermissions: gw2ApiKeyPermissions || [],
       });
       get()._saveState();
     } catch (error) {
@@ -350,6 +359,59 @@ const useStore = create((set, get) => ({
   },
 
   setNotification: (notification) => set({ notification }),
+
+  // --- GW2 API Key Actions ---
+  saveUserGW2ApiKey: async (apiKey) => {
+    const { currentUser } = get();
+    if (!currentUser) {
+      get().setNotification({ type: 'error', message: 'No user logged in' });
+      setTimeout(() => get().setNotification(null), 4000);
+      throw new Error('No user logged in');
+    }
+
+    try {
+      const result = await saveGW2ApiKey(currentUser, apiKey);
+      set({
+        hasGW2ApiKey: true,
+        gw2AccountName: result.accountName,
+        gw2ApiKeyPermissions: result.permissions || [],
+      });
+      get().setNotification({
+        type: 'success',
+        message: `GW2 API Key saved! Account: ${result.accountName}`
+      });
+      setTimeout(() => get().setNotification(null), 4000);
+      return result;
+    } catch (error) {
+      get().setNotification({ type: 'error', message: error.message });
+      setTimeout(() => get().setNotification(null), 4000);
+      throw error;
+    }
+  },
+
+  removeUserGW2ApiKey: async () => {
+    const { currentUser } = get();
+    if (!currentUser) {
+      get().setNotification({ type: 'error', message: 'No user logged in' });
+      setTimeout(() => get().setNotification(null), 4000);
+      throw new Error('No user logged in');
+    }
+
+    try {
+      await deleteGW2ApiKey(currentUser);
+      set({
+        hasGW2ApiKey: false,
+        gw2AccountName: null,
+        gw2ApiKeyPermissions: [],
+      });
+      get().setNotification({ type: 'success', message: 'GW2 API Key removed' });
+      setTimeout(() => get().setNotification(null), 4000);
+    } catch (error) {
+      get().setNotification({ type: 'error', message: error.message });
+      setTimeout(() => get().setNotification(null), 4000);
+      throw error;
+    }
+  },
 
   checkAndResetDailyProgress: () => {
     const now = new Date();

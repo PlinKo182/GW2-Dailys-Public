@@ -10,6 +10,7 @@ import useStore from '../store/useStore';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import HistoryTab from './HistoryTab';
+import DailyActivitiesTab from './DailyActivitiesTab';
 
 const Dashboard = () => {
   // Local state for UI that doesn't need to be global
@@ -134,6 +135,12 @@ const Dashboard = () => {
               Live Events
             </Tabs.Trigger>
             <Tabs.Trigger
+              value="mapchests"
+              className="px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Daily Activities
+            </Tabs.Trigger>
+            <Tabs.Trigger
               value="history"
               className="px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -155,6 +162,7 @@ const Dashboard = () => {
                 onEventFilterChange={updateEventFilters}
               />
             )}
+            {activeTab === 'mapchests' && <DailyActivitiesTab />}
             {activeTab === 'history' && <HistoryTab />}
           </div>
         </Tabs.Root>

@@ -126,3 +126,119 @@ export async function saveProgress({ userName, date, dailyTasks, completedEventT
     throw e;
   }
 }
+
+// --- GW2 API Key Functions ---
+export async function saveGW2ApiKey(userName, apiKey) {
+  try {
+    const response = await axiosInstance.post(`${API}/user/gw2-api-key`, { userName, apiKey });
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data?.error || 'Failed to save GW2 API key.');
+  } catch (error) {
+    if (error.response && error.response.data && error.response.data.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw error;
+  }
+}
+
+export async function deleteGW2ApiKey(userName) {
+  try {
+    const response = await axiosInstance.delete(`${API}/user/gw2-api-key/${encodeURIComponent(userName)}`);
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    throw new Error(response.data?.error || 'Failed to delete GW2 API key.');
+  } catch (error) {
+    if (error.response && error.response.data && error.response.data.error) {
+      throw new Error(error.response.data.error);
+    }
+    throw error;
+  }
+}
+
+export async function fetchMapChests(userName) {
+  try {
+    const response = await axiosInstance.get(`${API}/user/mapchests/${encodeURIComponent(userName)}`);
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    // If needsApiKey is true, return that info
+    if (response.data && response.data.needsApiKey) {
+      return { needsApiKey: true, error: response.data.error };
+    }
+    throw new Error(response.data?.error || 'Failed to fetch map chests.');
+  } catch (error) {
+    if (error.response && error.response.data) {
+      if (error.response.data.needsApiKey) {
+        return { needsApiKey: true, error: error.response.data.error };
+      }
+      throw new Error(error.response.data.error);
+    }
+    throw error;
+  }
+}
+
+export async function fetchDailyCrafting(userName) {
+  try {
+    const response = await axiosInstance.get(`${API}/user/dailycrafting/${encodeURIComponent(userName)}`);
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    if (response.data && response.data.needsApiKey) {
+      return { needsApiKey: true, error: response.data.error };
+    }
+    throw new Error(response.data?.error || 'Failed to fetch daily crafting.');
+  } catch (error) {
+    if (error.response && error.response.data) {
+      if (error.response.data.needsApiKey) {
+        return { needsApiKey: true, error: error.response.data.error };
+      }
+      throw new Error(error.response.data.error);
+    }
+    throw error;
+  }
+}
+
+export async function fetchWorldBosses(userName) {
+  try {
+    const response = await axiosInstance.get(`${API}/user/worldbosses/${encodeURIComponent(userName)}`);
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    if (response.data && response.data.needsApiKey) {
+      return { needsApiKey: true, error: response.data.error };
+    }
+    throw new Error(response.data?.error || 'Failed to fetch world bosses.');
+  } catch (error) {
+    if (error.response && error.response.data) {
+      if (error.response.data.needsApiKey) {
+        return { needsApiKey: true, error: error.response.data.error };
+      }
+      throw new Error(error.response.data.error);
+    }
+    throw error;
+  }
+}
+
+export async function fetchFractals(userName) {
+  try {
+    const response = await axiosInstance.get(`${API}/user/fractals/${encodeURIComponent(userName)}`);
+    if (response.data && response.data.success) {
+      return response.data;
+    }
+    if (response.data && response.data.needsApiKey) {
+      return { needsApiKey: true, error: response.data.error };
+    }
+    throw new Error(response.data?.error || 'Failed to fetch fractals.');
+  } catch (error) {
+    if (error.response && error.response.data) {
+      if (error.response.data.needsApiKey) {
+        return { needsApiKey: true, error: error.response.data.error };
+      }
+      throw new Error(error.response.data.error);
+    }
+    throw error;
+  }
+}

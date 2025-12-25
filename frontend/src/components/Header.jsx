@@ -1,9 +1,14 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { formatTimeWithSeconds } from '../utils/timeUtils';
 import { ModeToggle } from "@/components/ui/ThemeSwitcher";
 import { LogoutButton } from './ui/LogoutButton';
+import { Settings } from 'lucide-react';
+import { Button } from './ui/button';
+import SettingsDialog from './SettingsDialog';
 
 const Header = ({ currentTime, apiStatus, isOnline }) => {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
   const getStatusDisplay = () => {
     if (!isOnline) {
       return { text: 'Offline', className: 'bg-destructive/20 text-destructive-foreground' };
@@ -23,31 +28,43 @@ const Header = ({ currentTime, apiStatus, isOnline }) => {
   const status = getStatusDisplay();
 
   return (
-    <header className="bg-card/95 border-b border-border sticky top-0 z-40 backdrop-blur-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
-              Guild Wars 2 Daily Tracker
-            </h1>
-            <div className={`px-3 py-1 rounded-full text-xs font-semibold ${status.className}`}>
-              {status.text}
-            </div>
-          </div>
-          
-          <div className="flex items-center gap-4">
-            <div className="text-right">
-              <div className="text-sm text-muted-foreground">Current Time</div>
-              <div className="text-lg font-mono text-primary">
-                {formatTimeWithSeconds(currentTime)}
+    <>
+      <header className="bg-card/95 border-b border-border sticky top-0 z-40 backdrop-blur-sm">
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-4">
+              <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-400 bg-clip-text text-transparent">
+                Guild Wars 2 Daily Tracker
+              </h1>
+              <div className={`px-3 py-1 rounded-full text-xs font-semibold ${status.className}`}>
+                {status.text}
               </div>
             </div>
-            <ModeToggle />
-            <LogoutButton />
+
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <div className="text-sm text-muted-foreground">Current Time</div>
+                <div className="text-lg font-mono text-primary">
+                  {formatTimeWithSeconds(currentTime)}
+                </div>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSettingsOpen(true)}
+                title="Settings"
+              >
+                <Settings className="w-5 h-5" />
+              </Button>
+              <ModeToggle />
+              <LogoutButton />
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+
+      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </>
   );
 };
 

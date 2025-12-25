@@ -65,6 +65,7 @@
     "build:analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
     "test": "craco test"
   },
+  "proxy": "http://localhost:8000",
   "browserslist": {
     "production": [
       ">0.2%",
