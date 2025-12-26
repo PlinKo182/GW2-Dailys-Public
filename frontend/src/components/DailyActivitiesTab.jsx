@@ -182,6 +182,9 @@ const DailyActivitiesTab = () => {
   const [showFractals, setShowFractals] = useState(true);
   const [showMapChests, setShowMapChests] = useState(true);
 
+  // Hide completed toggle
+  const [hideCompleted, setHideCompleted] = useState(false);
+
   const handleCopyWaypoint = (waypoint) => {
     navigator.clipboard.writeText(waypoint).then(() => {
       // Optional: Add a toast notification here
@@ -473,6 +476,19 @@ const DailyActivitiesTab = () => {
         </div>
       ) : (
         <div className="space-y-8">
+          {/* Hide Completed Toggle */}
+          <div className="flex items-center justify-end gap-2 pb-2 border-b">
+            <label className="flex items-center gap-2 cursor-pointer text-sm text-muted-foreground hover:text-foreground transition-colors">
+              <input
+                type="checkbox"
+                checked={hideCompleted}
+                onChange={(e) => setHideCompleted(e.target.checked)}
+                className="w-4 h-4 rounded border-2 cursor-pointer"
+              />
+              Hide Completed
+            </label>
+          </div>
+
           {/* Daily Crafting Section */}
           <div>
             <h3
@@ -484,7 +500,12 @@ const DailyActivitiesTab = () => {
             </h3>
             {showDailyCrafting && (
             <div className="grid gap-2">
-              {DAILY_CRAFTING.map((craft) => {
+              {DAILY_CRAFTING
+                .filter((craft) => {
+                  const isCompleted = dailyCrafting.includes(craft.id);
+                  return !hideCompleted || !isCompleted;
+                })
+                .map((craft) => {
                 const isCompleted = dailyCrafting.includes(craft.id);
 
                 return (
@@ -553,6 +574,7 @@ const DailyActivitiesTab = () => {
                   isCompleted: worldBosses.includes(boss.id),
                   nextBossInfo: getNextBossTime(boss.eventDataKey),
                 }))
+                .filter((boss) => !hideCompleted || !boss.isCompleted)
                 .sort((a, b) => {
                   // Completed bosses go to the end
                   if (a.isCompleted && !b.isCompleted) return 1;
@@ -649,6 +671,7 @@ const DailyActivitiesTab = () => {
                 </div>
               ) : (
                 fractals
+                  .filter((fractal) => !hideCompleted || !fractal.completed)
                   .sort((a, b) => {
                     // First: Recommended fractals (no tier), sorted by scale (low to high)
                     // Then: Tier 1, Tier 2, Tier 3, Tier 4, each sorted by fractal name
@@ -762,7 +785,14 @@ const DailyActivitiesTab = () => {
                   <div key={region}>
                     <h4 className="text-md font-semibold mb-3 text-primary">{region}</h4>
                     <div className="grid gap-2">
-                      {chestsInRegion.map((chest) => {
+                      {chestsInRegion
+                        .filter((chest) => {
+                          const isCompleted = chest.manual
+                            ? manualChests.includes(chest.id)
+                            : mapChests.includes(chest.id);
+                          return !hideCompleted || !isCompleted;
+                        })
+                        .map((chest) => {
                         const isCompleted = chest.manual
                           ? manualChests.includes(chest.id)
                           : mapChests.includes(chest.id);
