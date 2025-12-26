@@ -438,7 +438,7 @@ const DailyActivitiesTab = () => {
           {/* Category breakdown */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div className="bg-background/50 rounded p-2">
-              <div className="text-muted-foreground mb-1">Map Chests</div>
+              <div className="text-muted-foreground mb-1">Hero Chests</div>
               <div className="font-semibold">{completedMapChests}/{totalMapChests}</div>
             </div>
             <div className="bg-background/50 rounded p-2">
@@ -743,13 +743,13 @@ const DailyActivitiesTab = () => {
             )}
           </div>
 
-          {/* Map Chests Section */}
+          {/* Hero Chests Section */}
           <div>
             <h3
               className="text-xl font-bold mb-4 border-b pb-2 flex items-center justify-between cursor-pointer hover:text-primary transition-colors"
               onClick={() => setShowMapChests(!showMapChests)}
             >
-              <span>Map Chests</span>
+              <span>Hero Chests</span>
               {showMapChests ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             </h3>
             {showMapChests && (
