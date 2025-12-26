@@ -786,46 +786,54 @@ const DailyActivitiesTab = () => {
                     <h4 className="text-md font-semibold mb-3 text-primary">{region}</h4>
                     <div className="grid gap-2">
                       {chestsInRegion
-                        .filter((chest) => {
+                        .map((chest) => {
                           const isCompleted = chest.manual
                             ? manualChests.includes(chest.id)
                             : mapChests.includes(chest.id);
-                          return !hideCompleted || !isCompleted;
-                        })
-                        .map((chest) => {
-                        const isCompleted = chest.manual
-                          ? manualChests.includes(chest.id)
-                          : mapChests.includes(chest.id);
 
-                        // Get event info for this chest (support multiple events or single event)
-                        let activeEventInfo = null;
-                        let nextEventInfo = null;
+                          // Get event info for this chest (support multiple events or single event)
+                          let activeEventInfo = null;
+                          let nextEventInfo = null;
 
-                        if (chest.events) {
-                          // Multiple events - separate active and upcoming
-                          const eventInfos = chest.events
-                            .map(evt => getNextChestEventTime(chest.eventRegion, chest.eventMap, evt.eventDataKey))
-                            .filter(Boolean);
+                          if (chest.events) {
+                            // Multiple events - separate active and upcoming
+                            const eventInfos = chest.events
+                              .map(evt => getNextChestEventTime(chest.eventRegion, chest.eventMap, evt.eventDataKey))
+                              .filter(Boolean);
 
-                          // Find active event
-                          activeEventInfo = eventInfos.find(evt => evt.isActive);
+                            // Find active event
+                            activeEventInfo = eventInfos.find(evt => evt.isActive);
 
-                          // Find next upcoming event (not active)
-                          const upcomingEvents = eventInfos.filter(evt => !evt.isActive);
-                          if (upcomingEvents.length > 0) {
-                            nextEventInfo = upcomingEvents.sort((a, b) => a.minutesUntil - b.minutesUntil)[0];
-                          }
-                        } else if (chest.eventDataKey) {
-                          // Single event (legacy format)
-                          const eventInfo = getNextChestEventTime(chest.eventRegion, chest.eventMap, chest.eventDataKey);
-                          if (eventInfo) {
-                            if (eventInfo.isActive) {
-                              activeEventInfo = eventInfo;
-                            } else {
-                              nextEventInfo = eventInfo;
+                            // Find next upcoming event (not active)
+                            const upcomingEvents = eventInfos.filter(evt => !evt.isActive);
+                            if (upcomingEvents.length > 0) {
+                              nextEventInfo = upcomingEvents.sort((a, b) => a.minutesUntil - b.minutesUntil)[0];
+                            }
+                          } else if (chest.eventDataKey) {
+                            // Single event (legacy format)
+                            const eventInfo = getNextChestEventTime(chest.eventRegion, chest.eventMap, chest.eventDataKey);
+                            if (eventInfo) {
+                              if (eventInfo.isActive) {
+                                activeEventInfo = eventInfo;
+                              } else {
+                                nextEventInfo = eventInfo;
+                              }
                             }
                           }
-                        }
+
+                          return {
+                            ...chest,
+                            isCompleted,
+                            activeEventInfo,
+                            nextEventInfo,
+                            // Calculate sort priority: active events first (0 minutes), then by next event time
+                            sortTime: activeEventInfo ? 0 : (nextEventInfo ? nextEventInfo.minutesUntil : 999999)
+                          };
+                        })
+                        .filter((chest) => !hideCompleted || !chest.isCompleted)
+                        .sort((a, b) => a.sortTime - b.sortTime)
+                        .map((chest) => {
+                        const { isCompleted, activeEventInfo, nextEventInfo } = chest;
 
                         return (
                           <div
