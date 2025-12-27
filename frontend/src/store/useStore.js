@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { localStorageAPI, fetchProgress, saveProgress, createUser, saveUserFilters, saveCustomTasks, saveGW2ApiKey, deleteGW2ApiKey } from '../services/api';
+import { localStorageAPI, fetchProgress, saveProgress, createUser, saveUserFilters, saveCustomTasks, saveGW2ApiKey, deleteGW2ApiKey, fetchMapChests, fetchWorldBosses } from '../services/api';
 import { eventsData } from '../utils/eventsData';
 import { tasksData } from '../utils/tasksData';
 import { v4 as uuidv4 } from 'uuid';
@@ -59,6 +59,11 @@ const useStore = create((set, get) => ({
   hasGW2ApiKey: false,
   gw2AccountName: null,
   gw2ApiKeyPermissions: [],
+
+  // GW2 API completed data (cached to avoid duplicate requests)
+  completedMapChests: [],
+  completedWorldBosses: [],
+  manualChests: [],
 
   // --- ACTIONS ---
 
@@ -172,6 +177,11 @@ const useStore = create((set, get) => ({
         gw2ApiKeyPermissions: gw2ApiKeyPermissions || [],
       });
       get()._saveState();
+
+      // Load completed data if user has API key
+      if (gw2AccountName) {
+        get().loadCompletedData();
+      }
     } catch (error) {
       get().setNotification({ type: 'error', message: `Login failed: ${error.message}` });
       setTimeout(() => get().setNotification(null), 4000);
@@ -381,6 +391,10 @@ const useStore = create((set, get) => ({
         message: `GW2 API Key saved! Account: ${result.accountName}`
       });
       setTimeout(() => get().setNotification(null), 4000);
+
+      // Load completed data with the new API key
+      get().loadCompletedData();
+
       return result;
     } catch (error) {
       get().setNotification({ type: 'error', message: error.message });
@@ -403,6 +417,8 @@ const useStore = create((set, get) => ({
         hasGW2ApiKey: false,
         gw2AccountName: null,
         gw2ApiKeyPermissions: [],
+        completedMapChests: [],
+        completedWorldBosses: [],
       });
       get().setNotification({ type: 'success', message: 'GW2 API Key removed' });
       setTimeout(() => get().setNotification(null), 4000);
@@ -410,6 +426,45 @@ const useStore = create((set, get) => ({
       get().setNotification({ type: 'error', message: error.message });
       setTimeout(() => get().setNotification(null), 4000);
       throw error;
+    }
+  },
+
+  // Load and cache completed data from GW2 API
+  loadCompletedData: async () => {
+    const { currentUser, hasGW2ApiKey } = get();
+    if (!currentUser || !hasGW2ApiKey) {
+      set({
+        completedMapChests: [],
+        completedWorldBosses: [],
+      });
+      return;
+    }
+
+    try {
+      const [mapChestsResult, worldBossesResult] = await Promise.allSettled([
+        fetchMapChests(currentUser),
+        fetchWorldBosses(currentUser)
+      ]);
+
+      // Handle map chests
+      if (mapChestsResult.status === 'fulfilled' && mapChestsResult.value.success && !mapChestsResult.value.needsApiKey) {
+        set({ completedMapChests: mapChestsResult.value.data || [] });
+      } else {
+        set({ completedMapChests: [] });
+      }
+
+      // Handle world bosses
+      if (worldBossesResult.status === 'fulfilled' && worldBossesResult.value.success && !worldBossesResult.value.needsApiKey) {
+        set({ completedWorldBosses: worldBossesResult.value.data || [] });
+      } else {
+        set({ completedWorldBosses: [] });
+      }
+    } catch (error) {
+      console.error('Error loading completed data:', error);
+      set({
+        completedMapChests: [],
+        completedWorldBosses: [],
+      });
     }
   },
 

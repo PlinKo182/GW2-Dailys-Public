@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import useStore from '../store/useStore';
-import { fetchMapChests, fetchDailyCrafting, fetchWorldBosses, fetchFractals } from '../services/api';
+import { fetchDailyCrafting, fetchFractals } from '../services/api';
 import { Loader2, ChevronRight, ChevronDown, Key, AlertCircle, Check, X, Clock } from 'lucide-react';
 import { Button } from './ui/button';
 import LoadingSpinner from './LoadingSpinner';
@@ -161,12 +161,15 @@ const DailyActivitiesTab = () => {
   const hasGW2ApiKey = useStore((state) => state.hasGW2ApiKey);
   const gw2AccountName = useStore((state) => state.gw2AccountName);
   const saveUserGW2ApiKey = useStore((state) => state.saveUserGW2ApiKey);
+  const loadCompletedData = useStore((state) => state.loadCompletedData);
+
+  // Get cached data from store
+  const mapChests = useStore((state) => state.completedMapChests);
+  const worldBosses = useStore((state) => state.completedWorldBosses);
 
   const [apiKey, setApiKey] = useState('');
   const [loading, setLoading] = useState(false);
-  const [mapChests, setMapChests] = useState([]);
   const [dailyCrafting, setDailyCrafting] = useState([]);
-  const [worldBosses, setWorldBosses] = useState([]);
   const [fractals, setFractals] = useState([]);
   const [error, setError] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
@@ -205,29 +208,19 @@ const DailyActivitiesTab = () => {
     setError(null);
 
     try {
-      // Fetch all data in parallel - using Promise.allSettled to handle partial failures
-      const [mapChestsResult, craftingResult, worldBossesResult, fractalsResult] = await Promise.allSettled([
-        fetchMapChests(currentUser),
+      // Load completed data from store (mapChests and worldBosses)
+      loadCompletedData();
+
+      // Fetch only crafting and fractals data
+      const [craftingResult, fractalsResult] = await Promise.allSettled([
         fetchDailyCrafting(currentUser),
-        fetchWorldBosses(currentUser),
         fetchFractals(currentUser),
       ]);
 
       console.log('[DailyActivities] API Results:', {
-        mapChests: mapChestsResult.status === 'fulfilled' ? mapChestsResult.value : mapChestsResult.reason,
         crafting: craftingResult.status === 'fulfilled' ? craftingResult.value : craftingResult.reason,
-        worldBosses: worldBossesResult.status === 'fulfilled' ? worldBossesResult.value : worldBossesResult.reason,
         fractals: fractalsResult.status === 'fulfilled' ? fractalsResult.value : fractalsResult.reason
       });
-
-      // Handle map chests
-      if (mapChestsResult.status === 'fulfilled' && !mapChestsResult.value.needsApiKey) {
-        console.log('[DailyActivities] Setting map chests:', mapChestsResult.value.data);
-        setMapChests(mapChestsResult.value.data || []);
-      } else {
-        console.log('[DailyActivities] Map chests failed or needs API key');
-        setMapChests([]);
-      }
 
       // Handle daily crafting
       if (craftingResult.status === 'fulfilled' && !craftingResult.value.needsApiKey) {
@@ -236,15 +229,6 @@ const DailyActivitiesTab = () => {
       } else {
         console.log('[DailyActivities] Daily crafting failed or needs API key');
         setDailyCrafting([]);
-      }
-
-      // Handle world bosses
-      if (worldBossesResult.status === 'fulfilled' && !worldBossesResult.value.needsApiKey) {
-        console.log('[DailyActivities] Setting world bosses:', worldBossesResult.value.data);
-        setWorldBosses(worldBossesResult.value.data || []);
-      } else {
-        console.log('[DailyActivities] World bosses failed or needs API key');
-        setWorldBosses([]);
       }
 
       // Handle fractals - allow graceful failure
@@ -262,14 +246,12 @@ const DailyActivitiesTab = () => {
     } catch (err) {
       console.error('[DailyActivities] Error loading data:', err);
       setError(err.message);
-      setMapChests([]);
       setDailyCrafting([]);
-      setWorldBosses([]);
       setFractals([]);
     } finally {
       setLoadingData(false);
     }
-  }, [currentUser]);
+  }, [currentUser, loadCompletedData]);
 
   // Load all data when user has API key
   useEffect(() => {

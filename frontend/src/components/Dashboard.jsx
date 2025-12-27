@@ -11,6 +11,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import HistoryTab from './HistoryTab';
 import DailyActivitiesTab from './DailyActivitiesTab';
+import EventPlannerTab from './EventPlannerTab';
 
 const Dashboard = () => {
   // Local state for UI that doesn't need to be global
@@ -141,6 +142,12 @@ const Dashboard = () => {
               Daily Activities
             </Tabs.Trigger>
             <Tabs.Trigger
+              value="planner"
+              className="px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Timeline
+            </Tabs.Trigger>
+            <Tabs.Trigger
               value="history"
               className="px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -163,6 +170,7 @@ const Dashboard = () => {
               />
             )}
             {activeTab === 'mapchests' && <DailyActivitiesTab />}
+            {activeTab === 'planner' && <EventPlannerTab />}
             {activeTab === 'history' && <HistoryTab />}
           </div>
         </Tabs.Root>
