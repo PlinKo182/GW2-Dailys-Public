@@ -179,14 +179,60 @@ const DailyActivitiesTab = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  // Section visibility states
-  const [showDailyCrafting, setShowDailyCrafting] = useState(true);
-  const [showWorldBosses, setShowWorldBosses] = useState(true);
-  const [showFractals, setShowFractals] = useState(true);
-  const [showMapChests, setShowMapChests] = useState(true);
+  // Section visibility states with localStorage persistence
+  const [showDailyCrafting, setShowDailyCrafting] = useState(() => {
+    const saved = localStorage.getItem(`dailyActivities_showDailyCrafting_${currentUser}`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [showWorldBosses, setShowWorldBosses] = useState(() => {
+    const saved = localStorage.getItem(`dailyActivities_showWorldBosses_${currentUser}`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [showFractals, setShowFractals] = useState(() => {
+    const saved = localStorage.getItem(`dailyActivities_showFractals_${currentUser}`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+  const [showMapChests, setShowMapChests] = useState(() => {
+    const saved = localStorage.getItem(`dailyActivities_showMapChests_${currentUser}`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
-  // Hide completed toggle
-  const [hideCompleted, setHideCompleted] = useState(false);
+  // Hide completed toggle with localStorage persistence
+  const [hideCompleted, setHideCompleted] = useState(() => {
+    const saved = localStorage.getItem(`dailyActivities_hideCompleted_${currentUser}`);
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+
+  // Save preferences to localStorage when they change
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`dailyActivities_showDailyCrafting_${currentUser}`, JSON.stringify(showDailyCrafting));
+    }
+  }, [currentUser, showDailyCrafting]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`dailyActivities_showWorldBosses_${currentUser}`, JSON.stringify(showWorldBosses));
+    }
+  }, [currentUser, showWorldBosses]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`dailyActivities_showFractals_${currentUser}`, JSON.stringify(showFractals));
+    }
+  }, [currentUser, showFractals]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`dailyActivities_showMapChests_${currentUser}`, JSON.stringify(showMapChests));
+    }
+  }, [currentUser, showMapChests]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`dailyActivities_hideCompleted_${currentUser}`, JSON.stringify(hideCompleted));
+    }
+  }, [currentUser, hideCompleted]);
 
   const handleCopyWaypoint = (waypoint) => {
     navigator.clipboard.writeText(waypoint).then(() => {

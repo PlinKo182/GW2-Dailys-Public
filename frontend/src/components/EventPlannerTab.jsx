@@ -198,9 +198,15 @@ const EventPlannerTab = () => {
   const mapChests = useStore((state) => state.completedMapChests);
   const worldBosses = useStore((state) => state.completedWorldBosses);
 
-  // Filter toggles
-  const [hideCompleted, setHideCompleted] = useState(false);
-  const [showWorldBosses, setShowWorldBosses] = useState(true);
+  // Filter toggles with localStorage persistence
+  const [hideCompleted, setHideCompleted] = useState(() => {
+    const saved = localStorage.getItem(`timeline_hideCompleted_${currentUser}`);
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+  const [showWorldBosses, setShowWorldBosses] = useState(() => {
+    const saved = localStorage.getItem(`timeline_showWorldBosses_${currentUser}`);
+    return saved !== null ? JSON.parse(saved) : true;
+  });
 
   // Manual chests from localStorage
   const [manualChests, setManualChests] = useState([]);
@@ -212,6 +218,19 @@ const EventPlannerTab = () => {
       setManualChests(saved ? JSON.parse(saved) : []);
     }
   }, [currentUser]);
+
+  // Save filter preferences to localStorage when they change
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`timeline_hideCompleted_${currentUser}`, JSON.stringify(hideCompleted));
+    }
+  }, [currentUser, hideCompleted]);
+
+  useEffect(() => {
+    if (currentUser) {
+      localStorage.setItem(`timeline_showWorldBosses_${currentUser}`, JSON.stringify(showWorldBosses));
+    }
+  }, [currentUser, showWorldBosses]);
 
   // Calculate all events within the timeline window (-60min to +60min)
   const allUpcomingEvents = useMemo(() => {
