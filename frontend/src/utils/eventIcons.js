@@ -122,7 +122,7 @@ export const EVENT_ICONS = {
   "Noran's Homestead": 'https://wiki.guildwars2.com/images/5/57/Event_shield_%28tango_icon%29.png',
   
   // Path of Fire - Additional events  
-  'Buried Treasure': 'https://wiki.guildwars2.com/images/c/cd/Event_collect_%28tango_icon%29.png',
+  'Buried Treasure': 'https://render.guildwars2.com/file/657E455192B49F07FC437E42504C3C70D3565D61/1766454.png',
   
   // Living World Season 4
   'Escorts': 'https://wiki.guildwars2.com/images/5/57/Event_shield_%28tango_icon%29.png',
