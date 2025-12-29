@@ -12,6 +12,7 @@ import axios from 'axios';
 import HistoryTab from './HistoryTab';
 import DailyActivitiesTab from './DailyActivitiesTab';
 import EventPlannerTab from './EventPlannerTab';
+import LiveEventsTimeline from './LiveEventsTimeline';
 
 const Dashboard = () => {
   // Local state for UI that doesn't need to be global
@@ -136,6 +137,12 @@ const Dashboard = () => {
               Live Events
             </Tabs.Trigger>
             <Tabs.Trigger
+              value="liveTimeline"
+              className="px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              Live Events Timeline
+            </Tabs.Trigger>
+            <Tabs.Trigger
               value="mapchests"
               className="px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -145,7 +152,7 @@ const Dashboard = () => {
               value="planner"
               className="px-4 py-2 text-sm font-medium text-muted-foreground data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              Timeline
+              Daily Activities Timeline
             </Tabs.Trigger>
             <Tabs.Trigger
               value="history"
@@ -169,6 +176,7 @@ const Dashboard = () => {
                 onEventFilterChange={updateEventFilters}
               />
             )}
+            {activeTab === 'liveTimeline' && <LiveEventsTimeline />}
             {activeTab === 'mapchests' && <DailyActivitiesTab />}
             {activeTab === 'planner' && <EventPlannerTab />}
             {activeTab === 'history' && <HistoryTab />}
