@@ -247,7 +247,7 @@ const EventPlannerTab = () => {
     });
   }, [currentTime]);
 
-  // Apply filters
+  // Apply filters and group by map
   const upcomingEvents = useMemo(() => {
     let filtered = allUpcomingEvents;
 
@@ -272,7 +272,24 @@ const EventPlannerTab = () => {
       });
     }
 
-    return filtered;
+    // Group by map name
+    const groupedByMap = filtered.reduce((acc, event) => {
+      const key = event.mapName;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(event);
+      return acc;
+    }, {});
+    
+    // Convert to array and sort by earliest event in each map
+    return Object.entries(groupedByMap)
+      .map(([mapName, events]) => ({
+        mapName,
+        events: events.sort((a, b) => a.minutesUntil - b.minutesUntil),
+        earliestTime: Math.min(...events.map(e => e.minutesUntil))
+      }))
+      .sort((a, b) => a.earliestTime - b.earliestTime);
   }, [allUpcomingEvents, showWorldBosses, hideCompleted, mapChests, worldBosses, manualChests]);
 
 
@@ -383,101 +400,104 @@ const EventPlannerTab = () => {
                   No events in current timeline window
                 </div>
               ) : (
-                upcomingEvents.map((event, index) => {
-                // Calculate position relative to "now" (which is at 25%)
-                // Timeline spans from -30min (0%) to +90min (100%)
-                // "Now" is at 25% (30min / 120min total)
+                upcomingEvents.map((mapGroup, mapIndex) => (
+                  <div
+                    key={`map-${mapGroup.mapName}-${mapIndex}`}
+                    className="relative h-12"
+                  >
+                    {mapGroup.events.map((event, eventIndex) => {
+                      // Calculate position relative to "now" (which is at 25%)
+                      // Timeline spans from -30min (0%) to +90min (100%)
+                      // "Now" is at 25% (30min / 120min total)
 
-                let eventStartMinutes;
-                if (event.isActive) {
-                  // Active event started in the past (minutesUntil is negative)
-                  eventStartMinutes = event.minutesUntil;
-                } else {
-                  // Future event
-                  eventStartMinutes = event.minutesUntil;
-                }
+                      let eventStartMinutes;
+                      if (event.isActive) {
+                        // Active event started in the past (minutesUntil is negative)
+                        eventStartMinutes = event.minutesUntil;
+                      } else {
+                        // Future event
+                        eventStartMinutes = event.minutesUntil;
+                      }
 
-                // Convert minutes to percentage
-                // -30min = 0%, 0min (NOW) = 25%, +90min = 100%
-                const startPercentage = ((eventStartMinutes + timelineData.minutesBefore) / timelineData.totalMinutes) * 100;
-                const durationPercentage = (event.duration / timelineData.totalMinutes) * 100;
+                      // Convert minutes to percentage
+                      // -30min = 0%, 0min (NOW) = 25%, +90min = 100%
+                      const startPercentage = ((eventStartMinutes + timelineData.minutesBefore) / timelineData.totalMinutes) * 100;
+                      const durationPercentage = (event.duration / timelineData.totalMinutes) * 100;
 
-                // Only show events that are visible in the timeline (-30 to +90 minutes)
-                if (eventStartMinutes < -30 || eventStartMinutes > 90) {
-                  return null;
-                }
+                      // Only show events that are visible in the timeline (-30 to +90 minutes)
+                      if (eventStartMinutes < -30 || eventStartMinutes > 90) {
+                        return null;
+                      }
 
-                // Clamp to visible range
-                const clampedStart = Math.max(0, Math.min(100, startPercentage));
-                const eventEndPercentage = startPercentage + durationPercentage;
-                const clampedEnd = Math.max(0, Math.min(100, eventEndPercentage));
-                const clampedWidth = clampedEnd - clampedStart;
+                      // Clamp to visible range
+                      const clampedStart = Math.max(0, Math.min(100, startPercentage));
+                      const eventEndPercentage = startPercentage + durationPercentage;
+                      const clampedEnd = Math.max(0, Math.min(100, eventEndPercentage));
+                      const clampedWidth = clampedEnd - clampedStart;
 
-                  return (
-                    <div
-                      key={`timeline-${event.eventRegion}-${event.eventMap}-${event.eventName}-${index}`}
-                      className="relative h-12"
-                    >
-                      <div
-                        className={`absolute h-full rounded-lg border-2 ${
-                          event.isActive
-                            ? 'bg-emerald-500/30 border-emerald-500'
-                            : 'bg-accent border-border'
-                        } hover:border-primary cursor-pointer group`}
-                        style={{
-                          left: `${clampedStart}%`,
-                          width: `${clampedWidth}%`,
-                          transition: 'left 60s linear, width 60s linear'
-                        }}
-                        onClick={() => event.waypoint && copyWaypoint(event.waypoint)}
-                      >
-                        <div className="flex items-center h-full px-2 gap-2 overflow-hidden">
-                          {/* Icon */}
-                          {event.type === 'hero_chest' && event.icon ? (
-                            <img
-                              src={event.icon}
-                              alt={event.mapName}
-                              className="w-6 h-6 rounded flex-shrink-0"
-                            />
-                          ) : (
-                            <Sword className="w-5 h-5 text-red-400 flex-shrink-0" />
-                          )}
+                      return (
+                        <div
+                          key={`event-${event.eventRegion}-${event.eventMap}-${event.eventName}-${eventIndex}`}
+                          className={`absolute h-full rounded-lg border-2 ${
+                            event.isActive
+                              ? 'bg-emerald-500/30 border-emerald-500'
+                              : 'bg-accent border-border'
+                          } hover:border-primary cursor-pointer group`}
+                          style={{
+                            left: `${clampedStart}%`,
+                            width: `${clampedWidth}%`,
+                            transition: 'left 60s linear, width 60s linear'
+                          }}
+                          onClick={() => event.waypoint && copyWaypoint(event.waypoint)}
+                        >
+                          <div className="flex items-center h-full px-2 gap-2 overflow-hidden">
+                            {/* Icon */}
+                            {event.type === 'hero_chest' && event.icon ? (
+                              <img
+                                src={event.icon}
+                                alt={event.mapName}
+                                className="w-6 h-6 rounded flex-shrink-0"
+                              />
+                            ) : (
+                              <Sword className="w-5 h-5 text-red-400 flex-shrink-0" />
+                            )}
 
-                          {/* Event name */}
-                          <div className="flex-1 min-w-0">
-                            <div className={`text-xs font-semibold truncate ${getExpansionColor(event.region)}`}>
-                              {event.mapName}
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate">
-                              {event.isActive ? `Ends in ${event.timeStr}` : `In ${event.timeStr}`}
+                            {/* Event name */}
+                            <div className="flex-1 min-w-0">
+                              <div className={`text-xs font-semibold truncate ${getExpansionColor(event.region)}`}>
+                                {event.mapName}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {event.isActive ? `Ends in ${event.timeStr}` : `In ${event.timeStr}`}
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        {/* Tooltip on hover */}
-                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-20 bg-popover border border-border rounded-lg p-3 shadow-lg min-w-[200px]">
-                          <div className="font-semibold">{event.mapName}</div>
-                          <div className="text-sm text-muted-foreground mb-2">{event.eventName}</div>
-                          <div className="text-xs">
-                            {event.isActive ? (
-                              <span className="text-emerald-400">Active - Ends in {event.timeStr}</span>
-                            ) : (
-                              <span>Starts in {event.timeStr}</span>
+                          {/* Tooltip on hover */}
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-20 bg-popover border border-border rounded-lg p-3 shadow-lg min-w-[200px]">
+                            <div className="font-semibold">{event.mapName}</div>
+                            <div className="text-sm text-muted-foreground mb-2">{event.eventName}</div>
+                            <div className="text-xs">
+                              {event.isActive ? (
+                                <span className="text-emerald-400">Active - Ends in {event.timeStr}</span>
+                              ) : (
+                                <span>Starts in {event.timeStr}</span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Duration: {event.duration}m
+                            </div>
+                            {event.waypoint && (
+                              <div className="mt-2 text-xs text-primary">
+                                Click to copy waypoint
+                              </div>
                             )}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Duration: {event.duration}m
-                          </div>
-                          {event.waypoint && (
-                            <div className="mt-2 text-xs text-primary">
-                              Click to copy waypoint
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    </div>
-                  );
-                })
+                      );
+                    })}
+                  </div>
+                ))
               )}
             </div>
           </div>
