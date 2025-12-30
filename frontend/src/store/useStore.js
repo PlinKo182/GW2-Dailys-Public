@@ -473,11 +473,30 @@ const useStore = create((set, get) => ({
     }
   },
 
-  checkAndResetDailyProgress: () => {
+  checkAndResetDailyProgress: async () => {
     const now = new Date();
     const currentUTCDate = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
 
     if (currentUTCDate !== get().lastResetDate) {
+      // Before resetting, try to fetch and save the latest API data from the previous day
+      const { currentUser, hasGW2ApiKey } = get();
+      if (currentUser && hasGW2ApiKey) {
+        try {
+          // Add timeout: if API takes more than 10 seconds, proceed with reset anyway
+          const loadDataPromise = get().loadCompletedData();
+          const timeoutPromise = new Promise((resolve) => setTimeout(resolve, 10000));
+          
+          await Promise.race([loadDataPromise, timeoutPromise]);
+          
+          // Give sync 1 second to complete (if it hasn't timed out)
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } catch (error) {
+          console.error('Error loading completed data before reset:', error);
+          // Continue with reset even if API fails
+        }
+      }
+
+      // Now reset for the new day
       set({
         userData: {
             dailyTasks: defaultTasks,
@@ -486,6 +505,11 @@ const useStore = create((set, get) => ({
         lastResetDate: currentUTCDate
       });
       get()._saveState(); // Save the new reset date
+
+      // Load fresh API data for the new day (non-blocking)
+      if (currentUser && hasGW2ApiKey) {
+        get().loadCompletedData();
+      }
     }
   },
 }));
