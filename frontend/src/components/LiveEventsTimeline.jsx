@@ -163,14 +163,33 @@ const LiveEventsTimeline = () => {
     return events.sort((a, b) => a.minutesUntil - b.minutesUntil);
   }, [currentTime, eventFilters, completedEventTypes]);
 
-  // Apply timeline window filter
+  // Apply timeline window filter and group by zone
   const filteredEvents = useMemo(() => {
     // Filter to show only events within timeline window (-30 to +90 minutes)
-    return allUpcomingEvents.filter(event => {
+    const eventsInWindow = allUpcomingEvents.filter(event => {
       const startMinutes = event.minutesUntil;
       const endMinutes = event.isActive ? event.minutesRemaining : event.minutesUntil + event.duration;
       return endMinutes >= -30 && startMinutes <= 90;
     });
+    
+    // Group by zone
+    const groupedByZone = eventsInWindow.reduce((acc, event) => {
+      const key = event.zone;
+      if (!acc[key]) {
+        acc[key] = [];
+      }
+      acc[key].push(event);
+      return acc;
+    }, {});
+    
+    // Convert to array and sort by earliest event in each zone
+    return Object.entries(groupedByZone)
+      .map(([zone, events]) => ({
+        zone,
+        events: events.sort((a, b) => a.minutesUntil - b.minutesUntil),
+        earliestTime: Math.min(...events.map(e => e.minutesUntil))
+      }))
+      .sort((a, b) => a.earliestTime - b.earliestTime);
   }, [allUpcomingEvents]);
 
   // Timeline configuration
@@ -260,93 +279,96 @@ const LiveEventsTimeline = () => {
                   )}
                 </div>
               ) : (
-                filteredEvents.map((event, index) => {
-                  const eventStartMinutes = event.minutesUntil;
-                  
-                  // Convert minutes to percentage
-                  const startPercentage = ((eventStartMinutes + timelineData.minutesBefore) / timelineData.totalMinutes) * 100;
-                  const durationPercentage = (event.duration / timelineData.totalMinutes) * 100;
+                filteredEvents.map((zoneGroup, zoneIndex) => (
+                  <div
+                    key={`zone-${zoneGroup.zone}-${zoneIndex}`}
+                    className="relative h-12"
+                  >
+                    {zoneGroup.events.map((event, eventIndex) => {
+                      const eventStartMinutes = event.minutesUntil;
+                      
+                      // Convert minutes to percentage
+                      const startPercentage = ((eventStartMinutes + timelineData.minutesBefore) / timelineData.totalMinutes) * 100;
+                      const durationPercentage = (event.duration / timelineData.totalMinutes) * 100;
 
-                  // Clamp to visible range
-                  const clampedStart = Math.max(0, Math.min(100, startPercentage));
-                  const eventEndPercentage = startPercentage + durationPercentage;
-                  const clampedEnd = Math.max(0, Math.min(100, eventEndPercentage));
-                  const clampedWidth = clampedEnd - clampedStart;
+                      // Clamp to visible range
+                      const clampedStart = Math.max(0, Math.min(100, startPercentage));
+                      const eventEndPercentage = startPercentage + durationPercentage;
+                      const clampedEnd = Math.max(0, Math.min(100, eventEndPercentage));
+                      const clampedWidth = clampedEnd - clampedStart;
 
-                  return (
-                    <div
-                      key={`live-timeline-${event.eventKey}-${index}`}
-                      className="relative h-12"
-                    >
-                      <div
-                        className={`absolute h-full rounded-lg border-2 ${
-                          event.isActive
-                            ? 'bg-emerald-500/30 border-emerald-500'
-                            : event.isCompleted
-                            ? 'bg-muted/50 border-muted-foreground/30'
-                            : 'bg-accent border-border'
-                        } hover:border-primary cursor-pointer group`}
-                        style={{
-                          left: `${clampedStart}%`,
-                          width: `${clampedWidth}%`,
-                          transition: 'left 60s linear, width 60s linear'
-                        }}
-                        onClick={() => event.waypoint && copyWaypoint(event.waypoint)}
-                      >
-                        <div className="flex items-center h-full px-2 gap-2 overflow-hidden">
-                          {/* Event icon */}
-                          {EVENT_ICONS[event.eventName] ? (
-                            <img
-                              src={EVENT_ICONS[event.eventName]}
-                              alt={event.eventName}
-                              className="w-6 h-6 rounded flex-shrink-0"
-                            />
-                          ) : (
-                            <div className="w-6 h-6 rounded flex-shrink-0 bg-muted flex items-center justify-center text-xs">
-                              ?
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <div className={`text-xs font-semibold truncate ${getExpansionColor(event.expansion)}`}>
-                              {event.eventName}
-                            </div>
-                            <div className="text-xs text-muted-foreground truncate">
-                              {event.zone} • {event.isActive ? `Ends in ${formatTime(event.minutesRemaining)}` : `In ${formatTime(event.minutesUntil)}`}
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Tooltip on hover */}
-                        <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-20 bg-popover border border-border rounded-lg p-3 shadow-lg min-w-[200px]">
-                          <div className="font-semibold">{event.eventName}</div>
-                          <div className="text-sm text-muted-foreground mb-2">
-                            {event.expansion} - {event.zone}
-                          </div>
-                          <div className="text-xs">
-                            {event.isActive ? (
-                              <span className="text-emerald-400">Active - Ends in {formatTime(event.minutesRemaining)}</span>
+                      return (
+                        <div
+                          key={`event-${event.eventKey}-${eventIndex}`}
+                          className={`absolute h-full rounded-lg border-2 ${
+                            event.isActive
+                              ? 'bg-emerald-500/30 border-emerald-500'
+                              : event.isCompleted
+                              ? 'bg-muted/50 border-muted-foreground/30'
+                              : 'bg-accent border-border'
+                          } hover:border-primary cursor-pointer group`}
+                          style={{
+                            left: `${clampedStart}%`,
+                            width: `${clampedWidth}%`,
+                            transition: 'left 60s linear, width 60s linear'
+                          }}
+                          onClick={() => event.waypoint && copyWaypoint(event.waypoint)}
+                        >
+                          <div className="flex items-center h-full px-2 gap-2 overflow-hidden">
+                            {/* Event icon */}
+                            {EVENT_ICONS[event.eventName] ? (
+                              <img
+                                src={EVENT_ICONS[event.eventName]}
+                                alt={event.eventName}
+                                className="w-6 h-6 rounded flex-shrink-0"
+                              />
                             ) : (
-                              <span>Starts in {formatTime(event.minutesUntil)}</span>
+                              <div className="w-6 h-6 rounded flex-shrink-0 bg-muted flex items-center justify-center text-xs">
+                                ?
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <div className={`text-xs font-semibold truncate ${getExpansionColor(event.expansion)}`}>
+                                {event.eventName}
+                              </div>
+                              <div className="text-xs text-muted-foreground truncate">
+                                {event.zone} • {event.isActive ? `Ends in ${formatTime(event.minutesRemaining)}` : `In ${formatTime(event.minutesUntil)}`}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Tooltip on hover */}
+                          <div className="absolute left-1/2 -translate-x-1/2 bottom-full mb-2 hidden group-hover:block z-20 bg-popover border border-border rounded-lg p-3 shadow-lg min-w-[200px]">
+                            <div className="font-semibold">{event.eventName}</div>
+                            <div className="text-sm text-muted-foreground mb-2">
+                              {event.expansion} - {event.zone}
+                            </div>
+                            <div className="text-xs">
+                              {event.isActive ? (
+                                <span className="text-emerald-400">Active - Ends in {formatTime(event.minutesRemaining)}</span>
+                              ) : (
+                                <span>Starts in {formatTime(event.minutesUntil)}</span>
+                              )}
+                            </div>
+                            <div className="text-xs text-muted-foreground mt-1">
+                              Duration: {event.duration}m
+                            </div>
+                            {event.waypoint && (
+                              <div className="mt-2 text-xs text-primary">
+                                Click to copy waypoint
+                              </div>
+                            )}
+                            {event.isCompleted && (
+                              <div className="mt-2 text-xs text-muted-foreground">
+                                ✓ Completed
+                              </div>
                             )}
                           </div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            Duration: {event.duration}m
-                          </div>
-                          {event.waypoint && (
-                            <div className="mt-2 text-xs text-primary">
-                              Click to copy waypoint
-                            </div>
-                          )}
-                          {event.isCompleted && (
-                            <div className="mt-2 text-xs text-muted-foreground">
-                              ✓ Completed
-                            </div>
-                          )}
                         </div>
-                      </div>
-                    </div>
-                  );
-                })
+                      );
+                    })}
+                  </div>
+                ))
               )}
             </div>
           </div>

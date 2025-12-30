@@ -48,17 +48,55 @@ const HistoryTab = () => {
       specials: "Special Tasks"
     };
 
-    for (const [category, tasks] of Object.entries(dayData.dailyTasks)) {
-      const completedTasks = Object.entries(tasks)
-        .filter(([_, isCompleted]) => isCompleted)
-        .map(([taskId]) => {
-          // Tornar o nome mais amigável
-          return taskId.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
-        });
+    // Check if dailyTasks is a nested object (old format) or flat (new format)
+    const firstKey = Object.keys(dayData.dailyTasks)[0];
+    const isNested = firstKey && typeof dayData.dailyTasks[firstKey] === 'object' && !Array.isArray(dayData.dailyTasks[firstKey]);
 
-      if (completedTasks.length > 0) {
-        tasksByCategory[categoryNames[category] || category] = completedTasks;
+    if (isNested) {
+      // Old format: { gathering: { vine_bridge: true }, crafting: { ... } }
+      for (const [category, tasks] of Object.entries(dayData.dailyTasks)) {
+        const completedTasks = Object.entries(tasks)
+          .filter(([_, isCompleted]) => isCompleted)
+          .map(([taskId]) => {
+            // Tornar o nome mais amigável
+            return taskId.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+          });
+
+        if (completedTasks.length > 0) {
+          tasksByCategory[categoryNames[category] || category] = completedTasks;
+        }
       }
+    } else {
+      // New format: { pact_supply_mehem: true, fractal_daily_...: true }
+      const pactSupply = [];
+      const fractals = [];
+      const challengeModes = [];
+      const strikes = [];
+      const other = [];
+
+      for (const [taskId, isCompleted] of Object.entries(dayData.dailyTasks)) {
+        if (isCompleted) {
+          const friendlyName = taskId.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+          
+          if (taskId.startsWith('pact_supply_')) {
+            pactSupply.push(friendlyName.replace('Pact Supply ', ''));
+          } else if (taskId.startsWith('fractal_daily_')) {
+            fractals.push(friendlyName.replace('Fractal Daily ', ''));
+          } else if (taskId.startsWith('fractal_cm_')) {
+            challengeModes.push(friendlyName.replace('Fractal Cm ', ''));
+          } else if (taskId.startsWith('strike_')) {
+            strikes.push(friendlyName.replace('Strike ', ''));
+          } else {
+            other.push(friendlyName);
+          }
+        }
+      }
+
+      if (pactSupply.length > 0) tasksByCategory['Pact Supply'] = pactSupply;
+      if (fractals.length > 0) tasksByCategory['Daily Fractals'] = fractals;
+      if (challengeModes.length > 0) tasksByCategory['Challenge Modes'] = challengeModes;
+      if (strikes.length > 0) tasksByCategory['Strikes'] = strikes;
+      if (other.length > 0) tasksByCategory['Other Tasks'] = other;
     }
 
     return tasksByCategory;
@@ -89,8 +127,13 @@ const HistoryTab = () => {
         const dayData = userHistory[date];
         const eventsByCategory = getEventsByCategory(dayData);
         const tasksByCategory = getDailyTasksByCategory(dayData);
+        const mapChests = dayData?.completedMapChests || [];
+        const worldBosses = dayData?.completedWorldBosses || [];
 
-        if (Object.keys(eventsByCategory).length === 0 && Object.keys(tasksByCategory).length === 0) {
+        if (Object.keys(eventsByCategory).length === 0 && 
+            Object.keys(tasksByCategory).length === 0 && 
+            mapChests.length === 0 && 
+            worldBosses.length === 0) {
           return null;
         }
 
@@ -125,6 +168,40 @@ const HistoryTab = () => {
                               </div>
                             ))}
                           </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* GW2 API Verified - Map Chests */}
+                {mapChests.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-md mb-3 text-emerald-400">Map Chests (API Verified)</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {mapChests.map((chest, index) => (
+                        <div
+                          key={`${chest}_${index}`}
+                          className="text-sm text-muted-foreground bg-emerald-900/20 border border-emerald-700/50 rounded px-2 py-1"
+                        >
+                          {chest}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* GW2 API Verified - World Bosses */}
+                {worldBosses.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-md mb-3 text-red-400">World Bosses (API Verified)</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {worldBosses.map((boss, index) => (
+                        <div
+                          key={`${boss}_${index}`}
+                          className="text-sm text-muted-foreground bg-red-900/20 border border-red-700/50 rounded px-2 py-1"
+                        >
+                          {boss}
                         </div>
                       ))}
                     </div>

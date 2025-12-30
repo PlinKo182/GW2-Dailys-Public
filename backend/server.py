@@ -108,6 +108,8 @@ class ProgressRequest(BaseModel):
     date: str
     dailyTasks: dict
     completedEventTypes: dict = {}
+    completedMapChests: list = []
+    completedWorldBosses: list = []
     userName: str
 
 class UserRequest(BaseModel):
@@ -208,6 +210,11 @@ async def save_progress(req: ProgressRequest):
     if progress_collection is None or users_collection is None:
         return {"success": False, "error": "MongoDB not configured"}
     try:
+        # Log the incoming data for debugging
+        logger.info(f"Saving progress for {req.userName} on {req.date}")
+        logger.info(f"Map Chests: {len(req.completedMapChests)} items")
+        logger.info(f"World Bosses: {len(req.completedWorldBosses)} items")
+        
         # First, verify the user exists in the users collection
         if not users_collection.find_one({"userName": req.userName}):
             return {"success": False, "error": "User not found, cannot save progress."}
@@ -219,7 +226,9 @@ async def save_progress(req: ProgressRequest):
                 "$set": {
                     f"progressByDate.{req.date}": {
                         "dailyTasks": req.dailyTasks,
-                        "completedEventTypes": req.completedEventTypes
+                        "completedEventTypes": req.completedEventTypes,
+                        "completedMapChests": req.completedMapChests,
+                        "completedWorldBosses": req.completedWorldBosses
                     }
                 }
             },

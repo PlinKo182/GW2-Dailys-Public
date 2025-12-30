@@ -112,7 +112,7 @@ const useStore = create((set, get) => ({
   _scheduleSync: () => {
     clearTimeout(syncTimer);
     syncTimer = setTimeout(() => {
-      const { currentUser, userData } = get();
+      const { currentUser, userData, completedMapChests, completedWorldBosses } = get();
       if (!currentUser) return;
 
       const today = new Date().toISOString().slice(0, 10);
@@ -122,6 +122,8 @@ const useStore = create((set, get) => ({
         // The backend expects the completion map under the key 'dailyTasks'
         dailyTasks: userData.taskCompletion,
         completedEventTypes: userData.completedEventTypes || {},
+        completedMapChests: completedMapChests || [],
+        completedWorldBosses: completedWorldBosses || [],
       };
       saveProgress(payload);
     }, SYNC_DEBOUNCE);
@@ -459,6 +461,9 @@ const useStore = create((set, get) => ({
       } else {
         set({ completedWorldBosses: [] });
       }
+
+      // Schedule sync to save the API-verified data to MongoDB
+      get()._scheduleSync();
     } catch (error) {
       console.error('Error loading completed data:', error);
       set({
