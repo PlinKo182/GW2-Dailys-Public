@@ -129,11 +129,15 @@ const HistoryTab = () => {
         const tasksByCategory = getDailyTasksByCategory(dayData);
         const mapChests = dayData?.completedMapChests || [];
         const worldBosses = dayData?.completedWorldBosses || [];
+        const fractals = dayData?.completedFractals || [];
+        const dailyCrafting = dayData?.completedDailyCrafting || [];
 
         if (Object.keys(eventsByCategory).length === 0 && 
             Object.keys(tasksByCategory).length === 0 && 
             mapChests.length === 0 && 
-            worldBosses.length === 0) {
+            worldBosses.length === 0 &&
+            fractals.length === 0 &&
+            dailyCrafting.length === 0) {
           return null;
         }
 
@@ -202,6 +206,40 @@ const HistoryTab = () => {
                           className="text-sm text-muted-foreground bg-red-900/20 border border-red-700/50 rounded px-2 py-1"
                         >
                           {boss}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* GW2 API Verified - Fractals */}
+                {fractals.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-md mb-3 text-blue-400">Daily Fractals (API Verified)</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {fractals.map((fractal, index) => (
+                        <div
+                          key={`${fractal}_${index}`}
+                          className="text-sm text-muted-foreground bg-blue-900/20 border border-blue-700/50 rounded px-2 py-1"
+                        >
+                          {fractal}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* GW2 API Verified - Daily Crafting */}
+                {dailyCrafting.length > 0 && (
+                  <div className="mb-4">
+                    <h4 className="font-semibold text-md mb-3 text-purple-400">Daily Crafting (API Verified)</h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                      {dailyCrafting.map((item, index) => (
+                        <div
+                          key={`${item}_${index}`}
+                          className="text-sm text-muted-foreground bg-purple-900/20 border border-purple-700/50 rounded px-2 py-1"
+                        >
+                          {item}
                         </div>
                       ))}
                     </div>

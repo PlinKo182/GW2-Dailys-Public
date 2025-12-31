@@ -109,7 +109,7 @@ export async function fetchProgress(userName) {
   }
 }
 
-export async function saveProgress({ userName, date, dailyTasks, completedEventTypes = {}, completedMapChests = [], completedWorldBosses = [] }) {
+export async function saveProgress({ userName, date, dailyTasks, completedEventTypes = {}, completedMapChests = [], completedWorldBosses = [], completedFractals = [], completedDailyCrafting = [] }) {
   try {
     const response = await axiosInstance.post(`${API}/progress`, {
       userName,
@@ -118,6 +118,8 @@ export async function saveProgress({ userName, date, dailyTasks, completedEventT
       completedEventTypes,
       completedMapChests,
       completedWorldBosses,
+      completedFractals,
+      completedDailyCrafting,
     });
     if (!response.data?.success) {
       throw new Error(response.data?.error || 'Falha ao salvar');

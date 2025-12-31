@@ -110,6 +110,8 @@ class ProgressRequest(BaseModel):
     completedEventTypes: dict = {}
     completedMapChests: list = []
     completedWorldBosses: list = []
+    completedFractals: list = []
+    completedDailyCrafting: list = []
     userName: str
 
 class UserRequest(BaseModel):
@@ -214,6 +216,8 @@ async def save_progress(req: ProgressRequest):
         logger.info(f"Saving progress for {req.userName} on {req.date}")
         logger.info(f"Map Chests: {len(req.completedMapChests)} items")
         logger.info(f"World Bosses: {len(req.completedWorldBosses)} items")
+        logger.info(f"Fractals: {len(req.completedFractals)} items")
+        logger.info(f"Daily Crafting: {len(req.completedDailyCrafting)} items")
         
         # First, verify the user exists in the users collection
         if not users_collection.find_one({"userName": req.userName}):
@@ -228,7 +232,9 @@ async def save_progress(req: ProgressRequest):
                         "dailyTasks": req.dailyTasks,
                         "completedEventTypes": req.completedEventTypes,
                         "completedMapChests": req.completedMapChests,
-                        "completedWorldBosses": req.completedWorldBosses
+                        "completedWorldBosses": req.completedWorldBosses,
+                        "completedFractals": req.completedFractals,
+                        "completedDailyCrafting": req.completedDailyCrafting
                     }
                 }
             },

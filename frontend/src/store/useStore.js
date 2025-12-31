@@ -112,7 +112,7 @@ const useStore = create((set, get) => ({
   _scheduleSync: () => {
     clearTimeout(syncTimer);
     syncTimer = setTimeout(() => {
-      const { currentUser, userData, completedMapChests, completedWorldBosses } = get();
+      const { currentUser, userData, completedMapChests, completedWorldBosses, completedFractals, completedDailyCrafting } = get();
       if (!currentUser) return;
 
       const today = new Date().toISOString().slice(0, 10);
@@ -124,6 +124,8 @@ const useStore = create((set, get) => ({
         completedEventTypes: userData.completedEventTypes || {},
         completedMapChests: completedMapChests || [],
         completedWorldBosses: completedWorldBosses || [],
+        completedFractals: completedFractals || [],
+        completedDailyCrafting: completedDailyCrafting || [],
       };
       saveProgress(payload);
     }, SYNC_DEBOUNCE);
@@ -421,6 +423,8 @@ const useStore = create((set, get) => ({
         gw2ApiKeyPermissions: [],
         completedMapChests: [],
         completedWorldBosses: [],
+        completedFractals: [],
+        completedDailyCrafting: [],
       });
       get().setNotification({ type: 'success', message: 'GW2 API Key removed' });
       setTimeout(() => get().setNotification(null), 4000);
@@ -438,14 +442,18 @@ const useStore = create((set, get) => ({
       set({
         completedMapChests: [],
         completedWorldBosses: [],
+        completedFractals: [],
+        completedDailyCrafting: [],
       });
       return;
     }
 
     try {
-      const [mapChestsResult, worldBossesResult] = await Promise.allSettled([
+      const [mapChestsResult, worldBossesResult, fractalsResult, dailyCraftingResult] = await Promise.allSettled([
         fetchMapChests(currentUser),
-        fetchWorldBosses(currentUser)
+        fetchWorldBosses(currentUser),
+        fetchFractals(currentUser),
+        fetchDailyCrafting(currentUser)
       ]);
 
       // Handle map chests
@@ -462,6 +470,22 @@ const useStore = create((set, get) => ({
         set({ completedWorldBosses: [] });
       }
 
+      // Handle fractals
+      if (fractalsResult.status === 'fulfilled' && fractalsResult.value.success && !fractalsResult.value.needsApiKey) {
+        const fractals = fractalsResult.value.data || [];
+        const completedFractalNames = fractals.filter(f => f.completed).map(f => f.full_name);
+        set({ completedFractals: completedFractalNames });
+      } else {
+        set({ completedFractals: [] });
+      }
+
+      // Handle daily crafting
+      if (dailyCraftingResult.status === 'fulfilled' && dailyCraftingResult.value.success && !dailyCraftingResult.value.needsApiKey) {
+        set({ completedDailyCrafting: dailyCraftingResult.value.data || [] });
+      } else {
+        set({ completedDailyCrafting: [] });
+      }
+
       // Schedule sync to save the API-verified data to MongoDB
       get()._scheduleSync();
     } catch (error) {
@@ -469,6 +493,8 @@ const useStore = create((set, get) => ({
       set({
         completedMapChests: [],
         completedWorldBosses: [],
+        completedFractals: [],
+        completedDailyCrafting: [],
       });
     }
   },
