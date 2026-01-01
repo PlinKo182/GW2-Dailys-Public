@@ -63,6 +63,8 @@ const useStore = create((set, get) => ({
   // GW2 API completed data (cached to avoid duplicate requests)
   completedMapChests: [],
   completedWorldBosses: [],
+  completedFractals: [],
+  completedDailyCrafting: [],
   manualChests: [],
 
   // --- ACTIONS ---
