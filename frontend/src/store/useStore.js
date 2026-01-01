@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { localStorageAPI, fetchProgress, saveProgress, createUser, saveUserFilters, saveCustomTasks, saveGW2ApiKey, deleteGW2ApiKey, fetchMapChests, fetchWorldBosses } from '../services/api';
+import { localStorageAPI, fetchProgress, saveProgress, createUser, saveUserFilters, saveCustomTasks, saveGW2ApiKey, deleteGW2ApiKey, fetchMapChests, fetchWorldBosses, fetchFractals, fetchDailyCrafting } from '../services/api';
 import { eventsData } from '../utils/eventsData';
 import { tasksData } from '../utils/tasksData';
 import { v4 as uuidv4 } from 'uuid';
@@ -440,6 +440,7 @@ const useStore = create((set, get) => ({
   // Load and cache completed data from GW2 API
   loadCompletedData: async () => {
     const { currentUser, hasGW2ApiKey } = get();
+    
     if (!currentUser || !hasGW2ApiKey) {
       set({
         completedMapChests: [],
@@ -488,8 +489,10 @@ const useStore = create((set, get) => ({
         set({ completedDailyCrafting: [] });
       }
 
-      // Schedule sync to save the API-verified data to MongoDB
-      get()._scheduleSync();
+      // Wait a bit for state to update, then schedule sync to save the API-verified data to MongoDB
+      setTimeout(() => {
+        get()._scheduleSync();
+      }, 100);
     } catch (error) {
       console.error('Error loading completed data:', error);
       set({
@@ -527,9 +530,14 @@ const useStore = create((set, get) => ({
       // Now reset for the new day
       set({
         userData: {
-            dailyTasks: defaultTasks,
+            taskCompletion: {},
             completedEventTypes: {},
         },
+        // Clear API data for new day (will be reloaded below)
+        completedMapChests: [],
+        completedWorldBosses: [],
+        completedFractals: [],
+        completedDailyCrafting: [],
         lastResetDate: currentUTCDate
       });
       get()._saveState(); // Save the new reset date

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
-import { Clock, Sword, CheckCircle2 } from 'lucide-react';
+import { Clock, Sword, Check, X } from 'lucide-react';
 import { eventsData } from '../utils/eventsData';
 import { useCurrentTime } from '../hooks/useCurrentTime';
 import useStore from '../store/useStore';
@@ -446,7 +446,7 @@ const EventPlannerTab = () => {
                           key={`event-${event.eventRegion}-${event.eventMap}-${event.eventName}-${eventIndex}`}
                           className={`absolute h-full rounded-lg border-2 ${
                             isCompleted
-                              ? 'bg-green-500/20 border-green-500 opacity-60'
+                              ? 'bg-green-500/10 border-green-500/30'
                               : event.isActive
                               ? 'bg-emerald-500/30 border-emerald-500'
                               : 'bg-accent border-border'
@@ -459,25 +459,22 @@ const EventPlannerTab = () => {
                           onClick={() => event.waypoint && copyWaypoint(event.waypoint)}
                         >
                           <div className="flex items-center h-full px-2 gap-2 overflow-hidden">
-                            {/* Icon */}
-                            {event.type === 'hero_chest' && event.icon ? (
-                              <div className="relative flex-shrink-0">
-                                <img
-                                  src={event.icon}
-                                  alt={event.mapName}
-                                  className="w-6 h-6 rounded"
-                                />
-                                {isCompleted && (
-                                  <CheckCircle2 className="absolute -top-1 -right-1 w-4 h-4 text-green-500 bg-background rounded-full" />
-                                )}
-                              </div>
+                            {/* Completion status icon */}
+                            {isCompleted ? (
+                              <Check className="w-4 h-4 text-green-500 flex-shrink-0" />
                             ) : (
-                              <div className="relative flex-shrink-0">
-                                <Sword className="w-5 h-5 text-red-400" />
-                                {isCompleted && (
-                                  <CheckCircle2 className="absolute -top-1 -right-1 w-4 h-4 text-green-500 bg-background rounded-full" />
-                                )}
-                              </div>
+                              <X className="w-4 h-4 text-muted-foreground flex-shrink-0" />
+                            )}
+                            
+                            {/* Event icon */}
+                            {event.type === 'hero_chest' && event.icon ? (
+                              <img
+                                src={event.icon}
+                                alt={event.mapName}
+                                className="w-6 h-6 rounded flex-shrink-0"
+                              />
+                            ) : (
+                              <Sword className="w-5 h-5 text-red-400 flex-shrink-0" />
                             )}
 
                             {/* Event name */}

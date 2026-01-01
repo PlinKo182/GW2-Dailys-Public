@@ -166,11 +166,11 @@ const DailyActivitiesTab = () => {
   // Get cached data from store
   const mapChests = useStore((state) => state.completedMapChests);
   const worldBosses = useStore((state) => state.completedWorldBosses);
+  const fractals = useStore((state) => state.completedFractals);
+  const dailyCrafting = useStore((state) => state.completedDailyCrafting);
 
   const [apiKey, setApiKey] = useState('');
   const [loading, setLoading] = useState(false);
-  const [dailyCrafting, setDailyCrafting] = useState([]);
-  const [fractals, setFractals] = useState([]);
   const [error, setError] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
   const [manualChests, setManualChests] = useState(() => {
@@ -254,46 +254,13 @@ const DailyActivitiesTab = () => {
     setError(null);
 
     try {
-      // Load completed data from store (mapChests and worldBosses)
-      loadCompletedData();
-
-      // Fetch only crafting and fractals data
-      const [craftingResult, fractalsResult] = await Promise.allSettled([
-        fetchDailyCrafting(currentUser),
-        fetchFractals(currentUser),
-      ]);
-
-      console.log('[DailyActivities] API Results:', {
-        crafting: craftingResult.status === 'fulfilled' ? craftingResult.value : craftingResult.reason,
-        fractals: fractalsResult.status === 'fulfilled' ? fractalsResult.value : fractalsResult.reason
-      });
-
-      // Handle daily crafting
-      if (craftingResult.status === 'fulfilled' && !craftingResult.value.needsApiKey) {
-        console.log('[DailyActivities] Setting daily crafting:', craftingResult.value.data);
-        setDailyCrafting(craftingResult.value.data || []);
-      } else {
-        console.log('[DailyActivities] Daily crafting failed or needs API key');
-        setDailyCrafting([]);
-      }
-
-      // Handle fractals - allow graceful failure
-      if (fractalsResult.status === 'fulfilled' && !fractalsResult.value.needsApiKey && fractalsResult.value.success) {
-        console.log('[DailyActivities] Setting fractals:', fractalsResult.value.data);
-        setFractals(fractalsResult.value.data || []);
-      } else {
-        console.log('[DailyActivities] Fractals failed or needs API key:', fractalsResult.status === 'fulfilled' ? fractalsResult.value : fractalsResult.reason);
-        setFractals([]);
-        // Set a non-blocking error message if fractals specifically failed
-        if (fractalsResult.status === 'fulfilled' && fractalsResult.value.error && !fractalsResult.value.needsApiKey) {
-          setError(`Fractals data unavailable: ${fractalsResult.value.error}`);
-        }
-      }
+      // Load all completed data from store (mapChests, worldBosses, fractals, dailyCrafting)
+      await loadCompletedData();
+      
+      console.log('[DailyActivities] All data loaded via store');
     } catch (err) {
       console.error('[DailyActivities] Error loading data:', err);
       setError(err.message);
-      setDailyCrafting([]);
-      setFractals([]);
     } finally {
       setLoadingData(false);
     }
