@@ -166,11 +166,12 @@ const DailyActivitiesTab = () => {
   // Get cached data from store
   const mapChests = useStore((state) => state.completedMapChests);
   const worldBosses = useStore((state) => state.completedWorldBosses);
-  const fractals = useStore((state) => state.completedFractals);
+  const completedFractalsFromStore = useStore((state) => state.completedFractals);
   const dailyCrafting = useStore((state) => state.completedDailyCrafting);
 
   const [apiKey, setApiKey] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fractals, setFractals] = useState([]); // Keep detailed fractal data locally
   const [error, setError] = useState(null);
   const [loadingData, setLoadingData] = useState(false);
   const [manualChests, setManualChests] = useState(() => {
@@ -256,6 +257,12 @@ const DailyActivitiesTab = () => {
     try {
       // Load all completed data from store (mapChests, worldBosses, fractals, dailyCrafting)
       await loadCompletedData();
+      
+      // Fetch detailed fractals data for display
+      const fractalsResult = await fetchFractals(currentUser);
+      if (fractalsResult.success && !fractalsResult.needsApiKey) {
+        setFractals(fractalsResult.data || []);
+      }
       
       console.log('[DailyActivities] All data loaded via store');
     } catch (err) {
@@ -387,14 +394,14 @@ const DailyActivitiesTab = () => {
   const completedMapChests = mapChests.length + manualChests.length;
   const completedCrafting = dailyCrafting.length;
   const completedWorldBosses = worldBosses.length;
-  const completedFractals = fractals.filter(f => f.completed).length;
+  const completedFractalsCount = completedFractalsFromStore.length; // Use store data for count
 
   const totalMapChests = ALL_MAP_CHESTS.length;
   const totalCrafting = DAILY_CRAFTING.length;
   const totalWorldBosses = WORLD_BOSSES.length;
-  const totalFractals = fractals.length;
+  const totalFractals = 15; // Total daily fractals (3 recommended + 12 dailies)
 
-  const totalCompleted = completedMapChests + completedCrafting + completedWorldBosses + completedFractals;
+  const totalCompleted = completedMapChests + completedCrafting + completedWorldBosses + completedFractalsCount;
   const totalActivities = totalMapChests + totalCrafting + totalWorldBosses + totalFractals;
   const completionPercentage = totalActivities > 0 ? Math.round((totalCompleted / totalActivities) * 100) : 0;
 
@@ -449,7 +456,7 @@ const DailyActivitiesTab = () => {
             </div>
             <div className="bg-background/50 rounded p-2">
               <div className="text-muted-foreground mb-1">Fractals</div>
-              <div className="font-semibold">{completedFractals}/{totalFractals}</div>
+              <div className="font-semibold">{completedFractalsCount}/{totalFractals}</div>
             </div>
           </div>
         </div>
@@ -666,7 +673,7 @@ const DailyActivitiesTab = () => {
                 </div>
               ) : (
                 fractals
-                  .filter((fractal) => !hideCompleted || !fractal.completed)
+                  .filter((fractal) => !hideCompleted || !completedFractalsFromStore.includes(fractal.full_name))
                   .sort((a, b) => {
                     // First: Recommended fractals (no tier), sorted by scale (low to high)
                     // Then: Tier 1, Tier 2, Tier 3, Tier 4, each sorted by fractal name
@@ -700,7 +707,7 @@ const DailyActivitiesTab = () => {
                     return scaleA - scaleB;
                   })
                   .map((fractal) => {
-                    const isCompleted = fractal.completed;
+                    const isCompleted = completedFractalsFromStore.includes(fractal.full_name);
 
                     return (
                       <div
