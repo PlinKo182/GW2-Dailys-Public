@@ -142,6 +142,7 @@ const getAllUpcomingEvents = (hoursAhead = 6) => {
           events.push({
             ...eventInfo,
             type: 'hero_chest',
+            chestId: chest.id,
             mapName: chest.name,
             region: chest.region,
             icon: chest.icon,
@@ -260,8 +261,8 @@ const EventPlannerTab = () => {
     if (hideCompleted) {
       filtered = filtered.filter(event => {
         if (event.type === 'hero_chest') {
-          // Check if hero chest is completed via API or manual
-          const chestId = ALL_MAP_CHESTS.find(c => c.name === event.mapName)?.id;
+          // Check if hero chest is completed via API or manual using chestId from event
+          const chestId = event.chestId;
           return !mapChests.includes(chestId) && !manualChests.includes(chestId);
         } else if (event.type === 'world_boss') {
           // Check if world boss is completed via API
