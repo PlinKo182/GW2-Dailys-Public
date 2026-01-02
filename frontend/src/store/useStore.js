@@ -219,6 +219,36 @@ const useStore = create((set, get) => ({
     }, TASKS_SYNC_DEBOUNCE);
   },
 
+  // Force immediate sync (called on beforeunload)
+  _forceSyncAll: () => {
+    clearTimeout(syncTimer);
+    clearTimeout(filterSyncTimer);
+    clearTimeout(tasksSyncTimer);
+
+    const { currentUser, userData, completedMapChests, completedWorldBosses, completedFractals, completedDailyCrafting, eventFilters, customTasks } = get();
+    if (!currentUser) return;
+
+    const today = new Date().toISOString().slice(0, 10);
+    const dataToSave = {
+      date: today,
+      dailyTasks: userData.taskCompletion,
+      completedEventTypes: userData.completedEventTypes,
+      completedMapChests,
+      completedWorldBosses,
+      completedFractals,
+      completedDailyCrafting,
+    };
+
+    // Use synchronous save (for beforeunload)
+    try {
+      saveProgress(currentUser, dataToSave);
+      saveUserFilters(currentUser, eventFilters);
+      saveCustomTasks(currentUser, customTasks);
+    } catch (error) {
+      console.error('Failed to force sync:', error);
+    }
+  },
+
   // --- Actions for managing custom tasks ---
   addCard: (title) => {
     const newCard = { id: uuidv4(), title: title || 'New Card', tasks: [] };
@@ -271,6 +301,9 @@ const useStore = create((set, get) => ({
   },
 
   logout: () => {
+    // Force immediate sync before logout
+    get()._forceSyncAll();
+    
     localStorageAPI.clearAppData();
     set({
         currentUser: null,
@@ -549,6 +582,13 @@ const useStore = create((set, get) => ({
     }
   },
 }));
+
+// Add beforeunload listener to force sync before page closes
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    useStore.getState()._forceSyncAll();
+  });
+}
 
 useStore.getState().loadInitialData();
 
