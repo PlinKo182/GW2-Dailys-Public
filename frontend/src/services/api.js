@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Use local backend for development
-const API = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+// Use environment variable or default to /api (relative URL for production)
+const API = process.env.REACT_APP_API_URL || '/api';
 const APP_DATA_KEY = 'tyriaTracker_appData';
 
 // Configurar axios
