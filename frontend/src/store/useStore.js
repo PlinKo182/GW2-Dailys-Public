@@ -48,10 +48,6 @@ const useStore = create((set, get) => ({
   lastResetDate: 0,
   showPactSupply: true,
   showDailyStrikes: true,
-  toggleDailyStrikes: () => {
-    set(state => ({ showDailyStrikes: !state.showDailyStrikes }));
-    get()._saveState();
-  },
   strikesTasks: [],
   setStrikesTasks: (tasks) => set({ strikesTasks: tasks }),
   showFractals: true,
@@ -107,6 +103,10 @@ const useStore = create((set, get) => ({
   },
   toggleChallengeModes: () => {
     set(state => ({ showChallengeModes: !state.showChallengeModes }));
+    get()._saveUIPreferences();
+  },
+  toggleDailyStrikes: () => {
+    set(state => ({ showDailyStrikes: !state.showDailyStrikes }));
     get()._saveUIPreferences();
   },
 
