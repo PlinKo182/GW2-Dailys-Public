@@ -12,7 +12,7 @@ const defaultTasks = {
 
 const SYNC_DEBOUNCE = 800;
 const FILTER_SYNC_DEBOUNCE = 1000;
-const TASKS_SYNC_DEBOUNCE = 1500;
+const TASKS_SYNC_DEBOUNCE = 300; // Reduced for faster saves
 let syncTimer = null;
 let filterSyncTimer = null;
 let tasksSyncTimer = null;
@@ -239,11 +239,36 @@ const useStore = create((set, get) => ({
       completedDailyCrafting,
     };
 
-    // Use synchronous save (for beforeunload)
+    // Use sendBeacon for reliable beforeunload sync
+    const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
+    
     try {
-      saveProgress(currentUser, dataToSave);
-      saveUserFilters(currentUser, eventFilters);
-      saveCustomTasks(currentUser, customTasks);
+      // Send progress data
+      const progressBlob = new Blob([JSON.stringify({
+        userName: currentUser,
+        date: dataToSave.date,
+        dailyTasks: dataToSave.dailyTasks,
+        completedEventTypes: dataToSave.completedEventTypes,
+        completedMapChests: dataToSave.completedMapChests,
+        completedWorldBosses: dataToSave.completedWorldBosses,
+        completedFractals: dataToSave.completedFractals,
+        completedDailyCrafting: dataToSave.completedDailyCrafting,
+      })], { type: 'application/json' });
+      navigator.sendBeacon(`${API}/api/progress`, progressBlob);
+
+      // Send filters
+      const filtersBlob = new Blob([JSON.stringify({
+        userName: currentUser,
+        filters: eventFilters
+      })], { type: 'application/json' });
+      navigator.sendBeacon(`${API}/api/user/filters`, filtersBlob);
+
+      // Send custom tasks
+      const tasksBlob = new Blob([JSON.stringify({
+        userName: currentUser,
+        customTasks: customTasks
+      })], { type: 'application/json' });
+      navigator.sendBeacon(`${API}/api/user/tasks`, tasksBlob);
     } catch (error) {
       console.error('Failed to force sync:', error);
     }
