@@ -12,7 +12,7 @@ const defaultTasks = {
 
 const SYNC_DEBOUNCE = 800;
 const FILTER_SYNC_DEBOUNCE = 1000;
-const TASKS_SYNC_DEBOUNCE = 300; // Reduced for faster saves
+const TASKS_SYNC_DEBOUNCE = 100; // Very fast sync for better reliability
 let syncTimer = null;
 let filterSyncTimer = null;
 let tasksSyncTimer = null;
@@ -152,15 +152,20 @@ const useStore = create((set, get) => ({
   loginUser: async (userName) => {
     try {
       const { progress, filters, customTasks, gw2AccountName, gw2ApiKeyPermissions } = await fetchProgress(userName);
+      console.log('[LoginUser] Loaded customTasks from backend:', customTasks);
+      
       const today = new Date().toISOString().slice(0, 10);
       const todayEntry = progress ? progress[today] : null;
 
       let finalCustomTasks = customTasks;
       // Ensure that we create default tasks if none exist or if the data is invalid.
       if (!Array.isArray(customTasks) || customTasks.length === 0) {
+        console.log('[LoginUser] No custom tasks found, creating defaults');
         finalCustomTasks = createDefaultTaskCards();
         // Save these default tasks to the backend for the new user
         saveCustomTasks(userName, finalCustomTasks);
+      } else {
+        console.log('[LoginUser] Using existing custom tasks:', finalCustomTasks.length, 'cards');
       }
 
       // Get the current UTC date to prevent the daily reset from firing incorrectly
@@ -215,18 +220,21 @@ const useStore = create((set, get) => ({
 
     clearTimeout(tasksSyncTimer);
     tasksSyncTimer = setTimeout(() => {
+      console.log('[CustomTasks] Saving to backend:', newTasks.length, 'cards');
       saveCustomTasks(currentUser, newTasks);
     }, TASKS_SYNC_DEBOUNCE);
   },
 
-  // Force immediate sync (called on beforeunload)
-  _forceSyncAll: () => {
+  // Force immediate sync (called on visibility change or beforeunload)
+  _forceSyncAll: async () => {
     clearTimeout(syncTimer);
     clearTimeout(filterSyncTimer);
     clearTimeout(tasksSyncTimer);
 
     const { currentUser, userData, completedMapChests, completedWorldBosses, completedFractals, completedDailyCrafting, eventFilters, customTasks } = get();
     if (!currentUser) return;
+
+    console.log('[ForceSyncAll] Syncing all data immediately');
 
     const today = new Date().toISOString().slice(0, 10);
     const dataToSave = {
@@ -239,38 +247,16 @@ const useStore = create((set, get) => ({
       completedDailyCrafting,
     };
 
-    // Use sendBeacon for reliable beforeunload sync
-    const API = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-    
+    // Use regular async saves (not sendBeacon) 
     try {
-      // Send progress data
-      const progressBlob = new Blob([JSON.stringify({
-        userName: currentUser,
-        date: dataToSave.date,
-        dailyTasks: dataToSave.dailyTasks,
-        completedEventTypes: dataToSave.completedEventTypes,
-        completedMapChests: dataToSave.completedMapChests,
-        completedWorldBosses: dataToSave.completedWorldBosses,
-        completedFractals: dataToSave.completedFractals,
-        completedDailyCrafting: dataToSave.completedDailyCrafting,
-      })], { type: 'application/json' });
-      navigator.sendBeacon(`${API}/api/progress`, progressBlob);
-
-      // Send filters
-      const filtersBlob = new Blob([JSON.stringify({
-        userName: currentUser,
-        filters: eventFilters
-      })], { type: 'application/json' });
-      navigator.sendBeacon(`${API}/api/user/filters`, filtersBlob);
-
-      // Send custom tasks
-      const tasksBlob = new Blob([JSON.stringify({
-        userName: currentUser,
-        customTasks: customTasks
-      })], { type: 'application/json' });
-      navigator.sendBeacon(`${API}/api/user/tasks`, tasksBlob);
+      await Promise.all([
+        saveProgress(currentUser, dataToSave),
+        saveUserFilters(currentUser, eventFilters),
+        saveCustomTasks(currentUser, customTasks)
+      ]);
+      console.log('[ForceSyncAll] All data synced successfully');
     } catch (error) {
-      console.error('Failed to force sync:', error);
+      console.error('[ForceSyncAll] Failed to force sync:', error);
     }
   },
 
@@ -608,10 +594,13 @@ const useStore = create((set, get) => ({
   },
 }));
 
-// Add beforeunload listener to force sync before page closes
+// Add visibility change listener to sync when tab becomes hidden
 if (typeof window !== 'undefined') {
-  window.addEventListener('beforeunload', () => {
-    useStore.getState()._forceSyncAll();
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      console.log('[VisibilityChange] Tab hidden, forcing sync...');
+      useStore.getState()._forceSyncAll();
+    }
   });
 }
 
