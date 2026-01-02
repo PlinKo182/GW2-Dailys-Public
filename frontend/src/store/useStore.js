@@ -115,6 +115,7 @@ const useStore = create((set, get) => ({
     if (!currentUser) return;
     
     const uiPrefs = { showPactSupply, showFractals, showChallengeModes, showDailyStrikes };
+    console.log('💾 Saving UI Prefs:', uiPrefs);
     
     // Save to localStorage for immediate persistence
     get()._saveState();
@@ -191,6 +192,9 @@ const useStore = create((set, get) => ({
 
       // Load UI preferences from filters (if saved)
       const uiPrefs = filters?.uiPreferences || {};
+      console.log('🔵 Loading UI Prefs:', uiPrefs);
+      console.log('🔵 showChallengeModes will be:', uiPrefs.showChallengeModes !== undefined ? uiPrefs.showChallengeModes : true);
+      console.log('🔵 showDailyStrikes will be:', uiPrefs.showDailyStrikes !== undefined ? uiPrefs.showDailyStrikes : true);
 
       set({
         currentUser: userName,
