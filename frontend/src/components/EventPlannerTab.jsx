@@ -454,7 +454,7 @@ const EventPlannerTab = () => {
                           style={{
                             left: `${clampedStart}%`,
                             width: `${clampedWidth}%`,
-                            transition: 'left 60s linear, width 60s linear'
+                            transition: 'left 0.5s ease-out, width 0.5s ease-out'
                           }}
                           onClick={() => event.waypoint && copyWaypoint(event.waypoint)}
                         >
