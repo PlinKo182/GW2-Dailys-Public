@@ -48,7 +48,10 @@ const useStore = create((set, get) => ({
   lastResetDate: 0,
   showPactSupply: true,
   showDailyStrikes: true,
-  toggleDailyStrikes: () => set(state => ({ showDailyStrikes: !state.showDailyStrikes })),
+  toggleDailyStrikes: () => {
+    set(state => ({ showDailyStrikes: !state.showDailyStrikes }));
+    get()._saveState();
+  },
   strikesTasks: [],
   setStrikesTasks: (tasks) => set({ strikesTasks: tasks }),
   showFractals: true,
@@ -70,9 +73,9 @@ const useStore = create((set, get) => ({
   // --- ACTIONS ---
 
   _saveState: () => {
-    const { currentUser, lastResetDate, showPactSupply, showFractals, showChallengeModes } = get();
+    const { currentUser, lastResetDate, showPactSupply, showFractals, showChallengeModes, showDailyStrikes } = get();
     // Save app-level data like session and UI preferences
-    localStorageAPI.saveAppData({ currentUser, lastResetDate, showPactSupply, showFractals, showChallengeModes });
+    localStorageAPI.saveAppData({ currentUser, lastResetDate, showPactSupply, showFractals, showChallengeModes, showDailyStrikes });
   },
 
   loadInitialData: () => {
@@ -83,6 +86,7 @@ const useStore = create((set, get) => ({
           showPactSupply: appData.showPactSupply !== false,
           showFractals: appData.showFractals !== false,
           showChallengeModes: appData.showChallengeModes !== false,
+          showDailyStrikes: appData.showDailyStrikes !== false,
         });
 
         // If a user session exists, log them in

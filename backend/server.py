@@ -272,6 +272,8 @@ async def get_user_progress(userName: str):
         gw2_account_name = user_doc.get("gw2AccountName", None)
         gw2_api_key_permissions = user_doc.get("gw2ApiKeyPermissions", None)
 
+        logging.info(f"Loading user data for {userName}: {len(custom_tasks) if custom_tasks else 0} custom tasks")
+
         # Combine all into a single data object
         response_data = {
             "progress": progress_data,
@@ -330,6 +332,8 @@ async def save_custom_tasks(req: CustomTasksRequest):
     if users_collection is None:
         return {"success": False, "error": "MongoDB not configured"}
     try:
+        logging.info(f"Saving custom tasks for {req.userName}: {len(req.customTasks)} cards")
+        
         # Pydantic models need to be converted to dicts for MongoDB
         tasks_to_save = [card.model_dump() for card in req.customTasks]
         result = users_collection.update_one(
@@ -338,8 +342,10 @@ async def save_custom_tasks(req: CustomTasksRequest):
         )
 
         if result.matched_count == 0:
+            logging.warning(f"User not found when saving tasks: {req.userName}")
             return {"success": False, "error": "User not found"}
 
+        logging.info(f"Custom tasks saved successfully. Modified: {result.modified_count}")
         return {"success": True, "modified_count": result.modified_count}
     except Exception as e:
         logging.error(f"Error saving custom tasks: {e}")
