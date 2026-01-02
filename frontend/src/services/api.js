@@ -86,9 +86,12 @@ export async function saveUserFilters(userName, filters) {
 export async function saveCustomTasks(userName, customTasks) {
   try {
     console.log('[API] Saving custom tasks to:', `${API}/user/tasks`);
-    console.log('[API] Data:', { userName, customTasks: customTasks.length + ' cards' });
+    console.log('[API] userName:', userName);
+    console.log('[API] customTasks count:', customTasks.length);
+    console.log('[API] customTasks data:', JSON.stringify(customTasks, null, 2));
     const response = await axiosInstance.post(`${API}/user/tasks`, { userName, customTasks });
-    console.log('[API] Save response:', response.data);
+    console.log('[API] Save response:', JSON.stringify(response.data, null, 2));
+    return response.data;
   } catch (e) {
     console.error('[API] Falha ao salvar tarefas personalizadas:', e?.message);
     console.error('[API] Error details:', e);
@@ -98,9 +101,11 @@ export async function saveCustomTasks(userName, customTasks) {
 
 export async function fetchProgress(userName) {
   try {
+    console.log('[API] Fetching progress from:', `${API}/progress/${userName}`);
     const res = await axiosInstance.get(`${API}/progress/${encodeURIComponent(userName)}`);
     if (res.data && res.data.success) {
       // The backend now returns { progress: {}, filters: {}, customTasks: [] }
+      console.log('[API] Fetch response - customTasks:', JSON.stringify(res.data.data.customTasks, null, 2));
       return res.data.data;
     }
     if (res.data && !res.data.success) {
