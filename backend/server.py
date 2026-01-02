@@ -272,7 +272,10 @@ async def get_user_progress(userName: str):
         gw2_account_name = user_doc.get("gw2AccountName", None)
         gw2_api_key_permissions = user_doc.get("gw2ApiKeyPermissions", None)
 
-        logging.info(f"Loading user data for {userName}: {len(custom_tasks) if custom_tasks else 0} custom tasks")
+        logging.info(f"Loading user data for {userName}:")
+        logging.info(f"  - customTasks: {custom_tasks}")
+        logging.info(f"  - customTasks type: {type(custom_tasks)}")
+        logging.info(f"  - customTasks length: {len(custom_tasks) if custom_tasks else 0}")
 
         # Combine all into a single data object
         response_data = {

@@ -85,9 +85,13 @@ export async function saveUserFilters(userName, filters) {
 
 export async function saveCustomTasks(userName, customTasks) {
   try {
-    await axiosInstance.post(`${API}/user/tasks`, { userName, customTasks });
+    console.log('[API] Saving custom tasks to:', `${API}/user/tasks`);
+    console.log('[API] Data:', { userName, customTasks: customTasks.length + ' cards' });
+    const response = await axiosInstance.post(`${API}/user/tasks`, { userName, customTasks });
+    console.log('[API] Save response:', response.data);
   } catch (e) {
-    console.warn('Falha ao salvar tarefas personalizadas:', e?.message);
+    console.error('[API] Falha ao salvar tarefas personalizadas:', e?.message);
+    console.error('[API] Error details:', e);
     // Não propaga o erro
   }
 }
