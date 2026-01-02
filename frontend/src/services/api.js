@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Sempre usar rota relativa /api (mesmo domínio)
-const API = '/api';
+// Use local backend for development
+const API = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 const APP_DATA_KEY = 'tyriaTracker_appData';
 
 // Configurar axios
@@ -85,16 +85,10 @@ export async function saveUserFilters(userName, filters) {
 
 export async function saveCustomTasks(userName, customTasks) {
   try {
-    console.log('[API] Saving custom tasks to:', `${API}/user/tasks`);
-    console.log('[API] userName:', userName);
-    console.log('[API] customTasks count:', customTasks.length);
-    console.log('[API] customTasks data:', JSON.stringify(customTasks, null, 2));
     const response = await axiosInstance.post(`${API}/user/tasks`, { userName, customTasks });
-    console.log('[API] Save response:', JSON.stringify(response.data, null, 2));
     return response.data;
   } catch (e) {
     console.error('[API] Falha ao salvar tarefas personalizadas:', e?.message);
-    console.error('[API] Error details:', e);
     // Não propaga o erro
   }
 }

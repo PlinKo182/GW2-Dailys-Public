@@ -99,15 +99,28 @@ const useStore = create((set, get) => ({
 
   togglePactSupply: () => {
     set(state => ({ showPactSupply: !state.showPactSupply }));
-    get()._saveState();
+    get()._saveUIPreferences();
   },
   toggleFractals: () => {
     set(state => ({ showFractals: !state.showFractals }));
-    get()._saveState();
+    get()._saveUIPreferences();
   },
   toggleChallengeModes: () => {
     set(state => ({ showChallengeModes: !state.showChallengeModes }));
+    get()._saveUIPreferences();
+  },
+
+  _saveUIPreferences: () => {
+    const { currentUser, showPactSupply, showFractals, showChallengeModes, showDailyStrikes } = get();
+    if (!currentUser) return;
+    
+    const uiPrefs = { showPactSupply, showFractals, showChallengeModes, showDailyStrikes };
+    
+    // Save to localStorage for immediate persistence
     get()._saveState();
+    
+    // Save to MongoDB for cross-device sync
+    saveUserFilters(currentUser, { ...get().eventFilters, uiPreferences: uiPrefs });
   },
 
   // Action to update the fractal tasks in the store
@@ -162,19 +175,22 @@ const useStore = create((set, get) => ({
       const todayEntry = progress ? progress[today] : null;
 
       let finalCustomTasks = customTasks;
-      // Ensure that we create default tasks if none exist or if the data is invalid.
-      if (!Array.isArray(customTasks) || customTasks.length === 0) {
-        console.log('[LoginUser] No custom tasks found, creating defaults');
+      // Only create default tasks if customTasks is null/undefined (new user), not if it's an empty array (user deleted all cards)
+      if (customTasks === null || customTasks === undefined) {
         finalCustomTasks = createDefaultTaskCards();
         // Save these default tasks to the backend for the new user
         saveCustomTasks(userName, finalCustomTasks);
-      } else {
-        console.log('[LoginUser] Using existing custom tasks:', finalCustomTasks.length, 'cards');
+      } else if (!Array.isArray(customTasks)) {
+        finalCustomTasks = createDefaultTaskCards();
+        saveCustomTasks(userName, finalCustomTasks);
       }
 
       // Get the current UTC date to prevent the daily reset from firing incorrectly
       const now = new Date();
       const currentUTCDate = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+
+      // Load UI preferences from filters (if saved)
+      const uiPrefs = filters?.uiPreferences || {};
 
       set({
         currentUser: userName,
@@ -186,6 +202,11 @@ const useStore = create((set, get) => ({
           completedEventTypes: todayEntry?.completedEventTypes || {},
         },
         lastResetDate: currentUTCDate,
+        // Load UI preferences from MongoDB or use defaults
+        showPactSupply: uiPrefs.showPactSupply !== undefined ? uiPrefs.showPactSupply : true,
+        showFractals: uiPrefs.showFractals !== undefined ? uiPrefs.showFractals : true,
+        showChallengeModes: uiPrefs.showChallengeModes !== undefined ? uiPrefs.showChallengeModes : true,
+        showDailyStrikes: uiPrefs.showDailyStrikes !== undefined ? uiPrefs.showDailyStrikes : true,
         // GW2 API Key state from server
         hasGW2ApiKey: !!gw2AccountName,
         gw2AccountName: gw2AccountName || null,
@@ -224,7 +245,6 @@ const useStore = create((set, get) => ({
 
     clearTimeout(tasksSyncTimer);
     tasksSyncTimer = setTimeout(() => {
-      console.log('[CustomTasks] Saving to backend:', newTasks.length, 'cards');
       saveCustomTasks(currentUser, newTasks);
     }, TASKS_SYNC_DEBOUNCE);
   },
@@ -238,27 +258,25 @@ const useStore = create((set, get) => ({
     const { currentUser, userData, completedMapChests, completedWorldBosses, completedFractals, completedDailyCrafting, eventFilters, customTasks } = get();
     if (!currentUser) return;
 
-    console.log('[ForceSyncAll] Syncing all data immediately');
-
     const today = new Date().toISOString().slice(0, 10);
-    const dataToSave = {
+    const progressPayload = {
+      userName: currentUser,
       date: today,
-      dailyTasks: userData.taskCompletion,
-      completedEventTypes: userData.completedEventTypes,
-      completedMapChests,
-      completedWorldBosses,
-      completedFractals,
-      completedDailyCrafting,
+      dailyTasks: userData.taskCompletion || {},
+      completedEventTypes: userData.completedEventTypes || {},
+      completedMapChests: completedMapChests || [],
+      completedWorldBosses: completedWorldBosses || [],
+      completedFractals: completedFractals || [],
+      completedDailyCrafting: completedDailyCrafting || [],
     };
 
     // Use regular async saves (not sendBeacon) 
     try {
       await Promise.all([
-        saveProgress(currentUser, dataToSave),
+        saveProgress(progressPayload),
         saveUserFilters(currentUser, eventFilters),
         saveCustomTasks(currentUser, customTasks)
       ]);
-      console.log('[ForceSyncAll] All data synced successfully');
     } catch (error) {
       console.error('[ForceSyncAll] Failed to force sync:', error);
     }
