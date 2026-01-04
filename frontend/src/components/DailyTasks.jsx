@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import useStore from '../store/useStore';
 import CustomTaskItem from './Tasks/CustomTaskItem';
 import TaskEditModal from './Tasks/TaskEditModal';
@@ -123,12 +123,14 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 
+
 const DailyTasks = ({ currentTime }) => {
   const [isEditMode, setIsEditMode] = useState(false);
   const customTasks = useStore((state) => state.customTasks);
   const addCard = useStore((state) => state.addCard);
   const handleTaskToggle = useStore((state) => state.handleTaskToggle);
   const taskCompletion = useStore((state) => state.userData.taskCompletion);
+  const checkAndResetDailyProgress = useStore((state) => state.checkAndResetDailyProgress);
   const {
     showPactSupply, togglePactSupply,
     showFractals, toggleFractals,
@@ -144,6 +146,11 @@ const DailyTasks = ({ currentTime }) => {
     showDailyStrikes: state.showDailyStrikes,
     toggleDailyStrikes: state.toggleDailyStrikes,
   }));
+
+  // Garante que o reset diário é checado ao montar o componente
+  useEffect(() => {
+    checkAndResetDailyProgress && checkAndResetDailyProgress();
+  }, [checkAndResetDailyProgress]);
 
   const copyToClipboard = useCallback((text) => {
     if (!text) return;
